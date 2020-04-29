@@ -28,4 +28,7 @@ typedef struct {
     Site *sites;
 } Path;
 
+Path *initialize_path();
+Site *initialize_sites(int siteCount);
+
 #endif //TOKAIDO_2310A_PATH_H

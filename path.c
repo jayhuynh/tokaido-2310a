@@ -9,3 +9,8 @@ Path *initialize_path() {
     newPath->siteCount = 0;
     return newPath;
 }
+
+Site *initialize_sites(int siteCount) {
+    Site *newSites = malloc(sizeof(Site) * siteCount);
+    return newSites;
+}

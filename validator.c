@@ -27,6 +27,7 @@ void validate_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
 }
 
 void validate_path(String *path, TokaidoGame *tokaidoGame) {
+    tokaidoGame->path = initialize_path();
     char *siteCount = strtok(path->buffer, ";");
     char *sites = strtok(NULL, ";");
 
@@ -37,11 +38,51 @@ void validate_path(String *path, TokaidoGame *tokaidoGame) {
 
     char *error = "";
     tokaidoGame->path->siteCount = (int) strtol(siteCount, &error, 10);
-    if (strcmp(error, "") != 0) {
+    if (strcmp(error, "") != 0 ||
+        (tokaidoGame->path->siteCount * 3) != strlen(sites)) {
         throw_error(BAD_PATH);
+    }
+    tokaidoGame->path->sites = initialize_sites(tokaidoGame->path->siteCount);
+
+    for (int i = 0, j = 0; i < strlen(sites); i += 3, j++) {
+        validate_site(sites[i], sites[i + 1], sites[i + 2],
+                      &tokaidoGame->path->sites[j], tokaidoGame->playerCount);
     }
 }
 
+void validate_site(char firstCharacter, char secondCharacter, char capacity,
+                   Site *site, int maxCapacity) {
+    SiteType type;
+    if (firstCharacter == 'M' && secondCharacter == 'o') {
+        type = Mo;
+    } else if (firstCharacter == 'V' && secondCharacter == '1') {
+        type = V1;
+    } else if (firstCharacter == 'V' && secondCharacter == '2') {
+        type = V2;
+    } else if (firstCharacter == 'D' && secondCharacter == 'o') {
+        type = Do;
+    } else if (firstCharacter == 'R' && secondCharacter == 'i') {
+        type = Ri;
+    } else if (firstCharacter == ':' && secondCharacter == ':') {
+        type = Barrier;
+    } else {
+        throw_error(BAD_PATH);
+    }
+    site->type = type;
+
+    if (type != Barrier) {
+        if (!isdigit(capacity) || capacity == '0') {
+            throw_error(BAD_PATH);
+        }
+        site->capacity = capacity - '0';
+    } else {
+        if (capacity != '-') {
+            throw_error(BAD_PATH);
+        }
+        site->capacity = maxCapacity;
+    }
+    site->visitingPlayers = malloc(sizeof(Player) * site->capacity);
+}
 
 /**
  * Print error message to stderr and exit the program base on error type

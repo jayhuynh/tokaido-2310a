@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include <stdbool.h>
 #include <string.h>
+#include <ctype.h>
 #include "game.h"
 
 typedef enum {
@@ -23,6 +24,8 @@ typedef enum {
 
 void validate_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
 void validate_path(String *path, TokaidoGame* tokaidoGame);
+void validate_site(char firstCharacter, char secondCharacter, char capacity,
+                   Site *site, int maxCapacity);
 void throw_error(Error type);
 
 #endif //TOKAIDO_2310A_VALIDATOR_H
