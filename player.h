@@ -5,4 +5,8 @@
 #ifndef TOKAIDO_2310A_PLAYER_H
 #define TOKAIDO_2310A_PLAYER_H
 
+typedef struct {
+    int id;
+} Player;
+
 #endif //TOKAIDO_2310A_PLAYER_H

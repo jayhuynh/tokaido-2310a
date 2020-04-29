@@ -4,8 +4,8 @@
 
 #include "validator.h"
 
-bool are_arguments_valid(int argc, char **argv) {
-    if (argc != 2) {
+void validate_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
+    if (argc != 3) {
         throw_error(BAD_ARGUMENTS);
     }
 
@@ -13,14 +13,33 @@ bool are_arguments_valid(int argc, char **argv) {
     int playerCount = (int) strtol(argv[1], &error, 10);
     if (strcmp(error, "") != 0 || playerCount < 1) {
         throw_error(BAD_PLAYER_COUNT);
+    } else {
+        tokaidoGame->playerCount = playerCount;
+        tokaidoGame->players = malloc(sizeof(Player) * playerCount);
     }
 
     int playerId = (int) strtol(argv[2], &error, 10);
     if (strcmp(error, "") != 0 || playerId < 0 || playerId >= playerCount) {
         throw_error(BAD_PLAYER_ID);
+    } else {
+        tokaidoGame->myId = playerId;
+    }
+}
+
+void validate_path(String *path, TokaidoGame *tokaidoGame) {
+    char *siteCount = strtok(path->buffer, ";");
+    char *sites = strtok(NULL, ";");
+
+    if (siteCount == NULL || sites == NULL ||
+        strlen(siteCount) + strlen(sites) != (path->length - 1)) {
+        throw_error(BAD_PATH);
     }
 
-    return true;
+    char *error = "";
+    tokaidoGame->path->siteCount = (int) strtol(siteCount, &error, 10);
+    if (strcmp(error, "") != 0) {
+        throw_error(BAD_PATH);
+    }
 }
 
 
@@ -49,6 +68,8 @@ void throw_error(Error type) {
             break;
         case BAD_COMMUNICATIONS:
             message = "Communications error";
+            break;
+        case OK:
             break;
     }
     fprintf(stderr, "%s\n", message);

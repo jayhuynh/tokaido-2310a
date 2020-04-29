@@ -3,4 +3,4 @@ project(tokaido_2310a C)
 
 set(CMAKE_C_STANDARD 99)
 
-add_executable(tokaido_2310a 2310a.c validator.c validator.h helper.c helper.h player.c player.h)
+add_executable(tokaido_2310a 2310a.c validator.c validator.h helper.c helper.h player.c player.h path.c path.h game.c game.h)

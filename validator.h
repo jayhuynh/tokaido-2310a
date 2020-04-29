@@ -8,7 +8,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
-#include "helper.h"
+#include <string.h>
+#include "game.h"
 
 typedef enum {
     OK = 0,
@@ -20,8 +21,8 @@ typedef enum {
     BAD_COMMUNICATIONS = 6
 } Error;
 
-bool are_arguments_valid(int argc, char **argv);
-
+void validate_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
+void validate_path(String *path, TokaidoGame* tokaidoGame);
 void throw_error(Error type);
 
 #endif //TOKAIDO_2310A_VALIDATOR_H
