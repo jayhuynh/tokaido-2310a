@@ -3,3 +3,11 @@
 //
 
 #include "player.h"
+
+Player* initialize_players(int playerCount){
+    Player* newPlayers = malloc(sizeof(Player) * playerCount);
+    for (int i = 0; i < playerCount; ++i) {
+        newPlayers[i].id = i;
+    }
+    return newPlayers;
+}

@@ -8,6 +8,12 @@
 #include "path.h"
 #include "helper.h"
 #include "path.h"
+#include "error.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <stdbool.h>
+#include <string.h>
+#include <ctype.h>
 
 typedef struct {
     Path *path;
@@ -19,5 +25,12 @@ typedef struct {
 
 TokaidoGame *initialize_tokaido_game();
 String *read_path();
+void load_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
+void load_path(TokaidoGame* tokaidoGame);
+void load_site(char firstCharacter, char secondCharacter, char capacity,
+               Site *site, int maxCapacity);
+void start(TokaidoGame *tokaidoGame);
+void render(TokaidoGame *tokaidoGame, FILE *stream);
+void add_all_player_first_barrier(TokaidoGame *tokaidoGame);
 
 #endif //TOKAIDO_2310A_GAME_H

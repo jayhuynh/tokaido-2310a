@@ -7,6 +7,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include "path.h"
 
 typedef struct {
     char* buffer;
@@ -14,8 +15,11 @@ typedef struct {
     int length;
 } String;
 
+void debug_site(Site *site);
+
 String *initialize_string();
-void write_to_stream(char *input, FILE *stream);
+void write_string_to_stream(char *input, FILE *stream);
+void write_char_to_stream(char input, FILE *stream);
 void read_from_stream(String *output, FILE* stream);
 
 #endif //TOKAIDO_2310A_HELPER_H
