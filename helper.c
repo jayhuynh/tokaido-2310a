@@ -4,10 +4,10 @@
 
 #include "helper.h"
 
-void debug_site(Site *site){
-    fprintf(stderr , "Label: %s; Visitingplayer: ", site->label);
+void debug_site(Site *site) {
+    fprintf(stderr, "Label: %s; Visitingplayer: ", site->label);
     for (int i = 0; i < site->capacity; ++i) {
-        fprintf(stderr , "%d, ", site->visitingPlayersId[i]);
+        fprintf(stderr, "%d, ", site->visitingPlayersId[i]);
     }
     fprintf(stderr, "\n");
 }
@@ -45,4 +45,21 @@ void read_from_stream(String *output, FILE *stream) {
         output->length++;
         (output->buffer)[++current] = '\0';
     }
+    if (input == EOF && output->length == 0) {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+}
+
+void free_string(String *string) {
+    free(string->buffer);
+    free(string);
+}
+
+int string_to_int(char *input, Error type) {
+    char *error = "";
+    int result = (int) strtol(input, &error, 10);
+    if (strcmp(error, "") != 0) {
+        throw_error(type);
+    }
+    return result;
 }

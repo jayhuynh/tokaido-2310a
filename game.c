@@ -26,9 +26,8 @@ void load_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
         throw_error(BAD_ARGUMENTS);
     }
 
-    char *error = "";
-    int playerCount = (int) strtol(argv[1], &error, 10);
-    if (strcmp(error, "") != 0 || playerCount < 1) {
+    int playerCount = string_to_int(argv[1], BAD_PLAYER_COUNT);
+    if (playerCount < 1) {
         throw_error(BAD_PLAYER_COUNT);
     } else {
         tokaidoGame->playerCount = playerCount;
@@ -36,8 +35,8 @@ void load_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     }
     tokaidoGame->players = initialize_players(tokaidoGame->playerCount);
 
-    int playerId = (int) strtol(argv[2], &error, 10);
-    if (strcmp(error, "") != 0 || playerId < 0 || playerId >= playerCount) {
+    int playerId = string_to_int(argv[2], BAD_PLAYER_ID);
+    if (playerId < 0 || playerId >= playerCount) {
         throw_error(BAD_PLAYER_ID);
     } else {
         tokaidoGame->myId = playerId;
@@ -55,10 +54,8 @@ void load_path(TokaidoGame *tokaidoGame) {
         throw_error(BAD_PATH);
     }
 
-    char *error = "";
-    tokaidoGame->path->siteCount = (int) strtol(siteCount, &error, 10);
-    if (strcmp(error, "") != 0 ||
-        (tokaidoGame->path->siteCount * 3) != strlen(sites)) {
+    tokaidoGame->path->siteCount = string_to_int(siteCount, BAD_PATH);
+    if ((tokaidoGame->path->siteCount * 3) != strlen(sites)) {
         throw_error(BAD_PATH);
     }
     tokaidoGame->path->sites = initialize_sites(tokaidoGame->path->siteCount);
@@ -73,6 +70,7 @@ void load_path(TokaidoGame *tokaidoGame) {
         Barrier) {
         throw_error(BAD_PATH);
     }
+    free_string(path);
 }
 
 void load_site(char firstCharacter, char secondCharacter, char capacity,
@@ -125,7 +123,9 @@ void start(TokaidoGame *tokaidoGame) {
     add_all_player_first_barrier(tokaidoGame);
     render(tokaidoGame, stderr);
     while (!endGame) {
-
+        String *message = read_message();
+        endGame = !process(message, tokaidoGame);
+        free_string(message);
     }
 }
 
@@ -164,4 +164,67 @@ void add_all_player_first_barrier(TokaidoGame *tokaidoGame) {
     for (int i = tokaidoGame->playerCount - 1; i > -1; i--) {
         add_player(&tokaidoGame->players[i], &tokaidoGame->path->sites[0]);
     }
+}
+
+String *read_message() {
+    String *message = initialize_string();
+    read_from_stream(message, stdin);
+    return message;
+}
+
+bool process(String *message, TokaidoGame *tokaidoGame) {
+    if (strcmp(message->buffer, "YT") == 0) {
+        send_back_a_move(tokaidoGame);
+    } else if (strcmp(message->buffer, "EARLY") == 0) {
+        throw_error(EARLY_GAME_OVER);
+    } else if (strcmp(message->buffer, "DONE") == 0) {
+        return false;
+    } else if (message->length >= 12 && message->buffer[0] == 'H' &&
+               message->buffer[1] == 'A' && message->buffer[2] == 'P') {
+        player_make_a_move(message, tokaidoGame);
+    } else {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+    return true;
+}
+
+void send_back_a_move(TokaidoGame *tokaidoGame) {
+
+}
+
+void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
+    char *playerIdStringFormat = strtok(message->buffer + 3, ",");
+    char *siteStringFormat = strtok(NULL, ",");
+    char *pointStringFormat = strtok(NULL, ",");
+    char *moneyStringFormat = strtok(NULL, ",");
+    char *cardStringFormat = strtok(NULL, ",");
+
+    if (playerIdStringFormat == NULL || siteStringFormat == NULL ||
+        pointStringFormat == NULL ||
+        moneyStringFormat == NULL || cardStringFormat == NULL) {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+    int playerId = string_to_int(playerIdStringFormat, BAD_COMMUNICATIONS);
+    if (playerId < 0 || playerId >= tokaidoGame->playerCount) {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+    int site = string_to_int(siteStringFormat, BAD_COMMUNICATIONS);
+    if (site < 0 || site >= tokaidoGame->path->siteCount) {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+    int point = string_to_int(pointStringFormat, BAD_COMMUNICATIONS);
+    if (point < 0) {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+    int money = string_to_int(moneyStringFormat, BAD_COMMUNICATIONS);
+    int card = string_to_int(cardStringFormat, BAD_COMMUNICATIONS);
+    if (card < 0 || card > 5) {
+        throw_error(BAD_COMMUNICATIONS);
+    }
+    update_status(playerId, site, point, money, card, tokaidoGame);
+}
+
+void update_status(int playerId, int site, int point, int money, int card,
+                   TokaidoGame *tokaidoGame) {
+
 }

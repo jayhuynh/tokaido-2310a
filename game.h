@@ -32,5 +32,11 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
 void start(TokaidoGame *tokaidoGame);
 void render(TokaidoGame *tokaidoGame, FILE *stream);
 void add_all_player_first_barrier(TokaidoGame *tokaidoGame);
+String *read_message();
+bool process(String *message, TokaidoGame* tokaidoGame);
+void send_back_a_move(TokaidoGame *tokaidoGame);
+void player_make_a_move(String *message, TokaidoGame *tokaidoGame);
+void update_status(int playerId, int site, int point, int money, int card,
+                   TokaidoGame *tokaidoGame);
 
 #endif //TOKAIDO_2310A_GAME_H
