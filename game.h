@@ -8,7 +8,6 @@
 #include "path.h"
 #include "helper.h"
 #include "path.h"
-#include "error.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>

@@ -8,7 +8,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "path.h"
 #include "error.h"
 
 typedef struct {
@@ -17,11 +16,12 @@ typedef struct {
     int length;
 } String;
 
-void debug_site(Site *site);
+//void debug_site(Site *site);
 
 String *initialize_string();
 void write_string_to_stream(char *input, FILE *stream);
 void write_char_to_stream(char input, FILE *stream);
+void write_int_to_stream(int input, FILE *stream);
 void read_from_stream(String *output, FILE* stream);
 void free_string(String *string);
 int string_to_int(char *input, Error type);

@@ -224,7 +224,17 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
     update_status(playerId, site, point, money, card, tokaidoGame);
 }
 
-void update_status(int playerId, int site, int point, int money, int card,
+void update_status(int playerId, int siteIndex, int point, int money, int card,
                    TokaidoGame *tokaidoGame) {
-
+    render(tokaidoGame, stderr);
+    Player *player = &tokaidoGame->players[playerId];
+    remove_player(player, &tokaidoGame->path->sites[player->currentSite]);
+    add_player(player, &tokaidoGame->path->sites[siteIndex]);
+    player->point += point;
+    player->money += money;
+    if (card != 0) {
+        player->cards[card - 1]++;
+    }
+    render_player(player, stderr);
+    render(tokaidoGame, stderr);
 }

@@ -4,13 +4,13 @@
 
 #include "helper.h"
 
-void debug_site(Site *site) {
-    fprintf(stderr, "Label: %s; Visitingplayer: ", site->label);
-    for (int i = 0; i < site->capacity; ++i) {
-        fprintf(stderr, "%d, ", site->visitingPlayersId[i]);
-    }
-    fprintf(stderr, "\n");
-}
+//void debug_site(Site *site) {
+//    fprintf(stderr, "Label: %s; Visitingplayer: ", site->label);
+//    for (int i = 0; i < site->capacity; ++i) {
+//        fprintf(stderr, "%d, ", site->visitingPlayersId[i]);
+//    }
+//    fprintf(stderr, "\n");
+//}
 
 String *initialize_string() {
     String *newString = malloc(sizeof(String) * 1);
@@ -27,6 +27,11 @@ void write_string_to_stream(char *input, FILE *stream) {
 
 void write_char_to_stream(char input, FILE *stream) {
     fprintf(stream, "%c", input);
+    fflush(stream);
+}
+
+void write_int_to_stream(int input, FILE *stream){
+    fprintf(stream, "%d", input);
     fflush(stream);
 }
 

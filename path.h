@@ -22,6 +22,7 @@ typedef struct {
     char *label;
     int capacity;
     int *visitingPlayersId;
+    int index;
 } Site;
 
 typedef struct {
