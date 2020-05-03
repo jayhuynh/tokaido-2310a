@@ -30,7 +30,7 @@ void write_char_to_stream(char input, FILE *stream) {
     fflush(stream);
 }
 
-void write_int_to_stream(int input, FILE *stream){
+void write_int_to_stream(int input, FILE *stream) {
     fprintf(stream, "%d", input);
     fflush(stream);
 }
@@ -63,7 +63,7 @@ void free_string(String *string) {
 int string_to_int(char *input, Error type) {
     char *error = "";
     int result = (int) strtol(input, &error, 10);
-    if (strcmp(error, "") != 0) {
+    if (strcmp(error, "") != 0 || strcmp(input, "") == 0) {
         throw_error(type);
     }
     return result;
