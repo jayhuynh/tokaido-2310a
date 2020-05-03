@@ -56,7 +56,7 @@ void load_path(TokaidoGame *tokaidoGame) {
     }
 
     tokaidoGame->path->siteCount = string_to_int(siteCount, BAD_PATH);
-    if ((tokaidoGame->path->siteCount * 3) != strlen(sites)) {
+    if ((tokaidoGame->path->siteCount * 3) != strlen(sites) || tokaidoGame->path->siteCount < 2) {
         throw_error(BAD_PATH);
     }
     tokaidoGame->path->sites = initialize_sites(tokaidoGame->path->siteCount);
@@ -89,7 +89,7 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
         label = "V2";
     } else if (firstCharacter == 'D' && secondCharacter == 'o') {
         type = Do;
-        label = "V3";
+        label = "Do";
     } else if (firstCharacter == 'R' && secondCharacter == 'i') {
         type = Ri;
         label = "Ri";
