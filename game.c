@@ -56,7 +56,8 @@ void load_path(TokaidoGame *tokaidoGame) {
     }
 
     tokaidoGame->path->siteCount = string_to_int(siteCount, BAD_PATH);
-    if ((tokaidoGame->path->siteCount * 3) != strlen(sites) || tokaidoGame->path->siteCount < 2) {
+    if ((tokaidoGame->path->siteCount * 3) != strlen(sites) ||
+        tokaidoGame->path->siteCount < 2) {
         throw_error(BAD_PATH);
     }
     tokaidoGame->path->sites = initialize_sites(tokaidoGame->path->siteCount);
@@ -200,11 +201,9 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     Path *path = tokaidoGame->path;
 
     if (me->money > 0) {
-        for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
-            if (!path->sites[i].isFull && path->sites[i].type == Do) {
-                *move = i;
-                return;
-            }
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Do,
+                                                            move)) {
+            return;
         }
     }
 
