@@ -7,6 +7,7 @@
 
 #include "player.h"
 #include <stdlib.h>
+#include <stdbool.h>
 
 typedef enum {
     Mo = 0,
@@ -23,6 +24,7 @@ typedef struct {
     int capacity;
     int *visitingPlayersId;
     int index;
+    bool isFull;
 } Site;
 
 typedef struct {
@@ -31,8 +33,11 @@ typedef struct {
 } Path;
 
 Path *initialize_path();
+
 Site *initialize_sites(int siteCount);
+
 void add_player(Player *player, Site *site);
+
 void remove_player(Player *player, Site *site);
 
 #endif //TOKAIDO_2310A_PATH_H

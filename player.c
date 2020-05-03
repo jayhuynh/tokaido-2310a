@@ -44,3 +44,11 @@ void render_player(Player *player, FILE *stream) {
     write_int_to_stream(player->cards[4], stream);
     write_string_to_stream("\n", stream);
 }
+
+int count_card(Player *player) {
+    int result = 0;
+    for (int i = 0; i < 5; ++i) {
+        result += player->cards[i];
+    }
+    return result;
+}

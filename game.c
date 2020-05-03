@@ -10,6 +10,7 @@ TokaidoGame *initialize_tokaido_game() {
     newTokaidoGame->deck = NULL;
     newTokaidoGame->players = NULL;
     newTokaidoGame->myId = 0;
+    newTokaidoGame->myPlayerType = '\0';
     newTokaidoGame->playerCount = 0;
     return newTokaidoGame;
 }
@@ -174,7 +175,13 @@ String *read_message() {
 
 bool process(String *message, TokaidoGame *tokaidoGame) {
     if (strcmp(message->buffer, "YT") == 0) {
-        send_back_a_move(tokaidoGame);
+        int move = -1;
+        if (tokaidoGame->myPlayerType == 'A') {
+            get_a_move_of_player_type_a(tokaidoGame, &move);
+        } else if (tokaidoGame->myPlayerType == 'B') {
+            get_a_move_of_player_type_b(tokaidoGame, &move);
+        }
+        send_back_move(move);
     } else if (strcmp(message->buffer, "EARLY") == 0) {
         throw_error(EARLY_GAME_OVER);
     } else if (strcmp(message->buffer, "DONE") == 0) {
@@ -188,8 +195,152 @@ bool process(String *message, TokaidoGame *tokaidoGame) {
     return true;
 }
 
-void send_back_a_move(TokaidoGame *tokaidoGame) {
+void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
 
+    if (me->money > 0) {
+        for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
+            if (!path->sites[i].isFull && path->sites[i].type == Do) {
+                *move = i;
+                return;
+            }
+        }
+    }
+
+    if (!path->sites[me->currentSite + 1].isFull &&
+        path->sites[me->currentSite + 1].type == Mo) {
+        *move = me->currentSite + 1;
+        return;
+    }
+
+    for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
+        if (!path->sites[i].isFull &&
+            (path->sites[i].type == V1 || path->sites[i].type == V2 ||
+             path->sites[i].type == Barrier)) {
+            *move = i;
+            return;
+        }
+    }
+}
+
+void get_a_move_of_player_type_b(TokaidoGame *tokaidoGame, int *move) {
+    if (get_a_move_other_player_later(tokaidoGame, move)) {
+        return;
+    }
+    if (get_a_move_odd_money(tokaidoGame, move)) {
+        return;
+    }
+    if (get_a_move_most_card(tokaidoGame, move)) {
+        return;
+    }
+    if (get_a_move_v2_between(tokaidoGame, move)) {
+        return;
+    }
+    get_a_move_forward(tokaidoGame, move);
+}
+
+bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
+
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        if (tokaidoGame->players[i].id != tokaidoGame->myId) {
+            if (path->sites[me->currentSite + 1].isFull ||
+                tokaidoGame->players[i].currentSite <= me->currentSite) {
+                break;
+            }
+            if (tokaidoGame->players[i].currentSite > me->currentSite &&
+                i == tokaidoGame->playerCount - 1) {
+                *move = me->currentSite + 1;
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
+
+    if (me->money % 2 == 1) {
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Mo,
+                                                            move)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
+    bool haveMostCard = true;
+    bool everyoneHasZeroCard = true;
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
+
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        if (tokaidoGame->players[i].id != tokaidoGame->myId) {
+            if (count_card(&tokaidoGame->players[i]) > count_card(me)) {
+                haveMostCard = false;
+            }
+            if (count_card(&tokaidoGame->players[i]) != 0) {
+                everyoneHasZeroCard = false;
+            }
+        }
+    }
+
+    if (haveMostCard || everyoneHasZeroCard) {
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Ri,
+                                                            move)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move) {
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
+
+    if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, V2,
+                                                        move)) {
+        return true;
+    }
+
+    return false;
+}
+
+bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move) {
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
+
+    for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
+        if (!path->sites[i].isFull) {
+            *move = i;
+            return true;
+        }
+    }
+
+    return false;
+}
+
+int get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
+                                                    SiteType type, int *move) {
+    Player *me = &tokaidoGame->players[tokaidoGame->myId];
+    Path *path = tokaidoGame->path;
+
+    for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
+        if (path->sites[i].type == Barrier) {
+            break;
+        }
+        if (path->sites[i].type == type && !path->sites[i].isFull) {
+            *move = i;
+            return true;
+        }
+    }
+    return false;
 }
 
 void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
@@ -237,4 +388,10 @@ void update_status(int playerId, int siteIndex, int point, int money, int card,
     }
     render_player(player, stderr);
     render(tokaidoGame, stderr);
+}
+
+void send_back_move(int move) {
+    write_string_to_stream("DO", stdout);
+    write_int_to_stream(move, stdout);
+    write_char_to_stream('\n', stdout);
 }
