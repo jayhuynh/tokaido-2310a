@@ -14,16 +14,16 @@ $(OBJ_DIR)/%.o: %.c $(DEPS)
 	if ! [ -d obj ]; then mkdir -p obj; fi
 	$(CC) -c $< -o $@ $(CFLAGS)
 
-2310a: $(OBJ)
+2310A: $(OBJ)
 	$(CC) 2310a.c $^ -o $@ $(CFLAGS)
 
-2310b: $(OBJ)
+2310B: $(OBJ)
 	$(CC) 2310b.c $^ -o $@ $(CFLAGS)
 
 2310dealer: $(OBJ)
 	$(CC) 2310dealer.c $^ -o $@ $(CFLAGS)
 
-all: 2310a 2310b 2310dealer
+all: 2310A 2310B 2310dealer
 
 clean:
 	rm -rf obj
