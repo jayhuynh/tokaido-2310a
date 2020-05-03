@@ -76,7 +76,7 @@ void load_path(TokaidoGame *tokaidoGame) {
 
 void load_site(char firstCharacter, char secondCharacter, char capacity,
                Site *site, int maxCapacity) {
-    SiteType type;
+    SiteType type = Barrier;
     char *label = "";
     if (firstCharacter == 'M' && secondCharacter == 'o') {
         type = Mo;
@@ -262,7 +262,6 @@ bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
 
 bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
-    Path *path = tokaidoGame->path;
 
     if (me->money % 2 == 1) {
         if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Mo,
@@ -277,7 +276,6 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
     bool haveMostCard = true;
     bool everyoneHasZeroCard = true;
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
-    Path *path = tokaidoGame->path;
 
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         if (tokaidoGame->players[i].id != tokaidoGame->myId) {
@@ -301,9 +299,6 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
 }
 
 bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move) {
-    Player *me = &tokaidoGame->players[tokaidoGame->myId];
-    Path *path = tokaidoGame->path;
-
     if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, V2,
                                                         move)) {
         return true;
