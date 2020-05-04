@@ -22,5 +22,7 @@ typedef struct {
 Player *initialize_players(int playerCount);
 void render_player(Player *player, FILE *stream);
 int count_card(Player *player);
+void convert_card_to_point(Player *player);
+void convert_v1_v2_to_point(Player *player);
 
 #endif //TOKAIDO_2310A_PLAYER_H

@@ -25,7 +25,7 @@ typedef struct {
 
 TokaidoGame *initialize_tokaido_game();
 String *read_path();
-void load_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
+void load_player_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
 void load_path(TokaidoGame* tokaidoGame);
 void load_site(char firstCharacter, char secondCharacter, char capacity,
                Site *site, int maxCapacity);
@@ -47,5 +47,6 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame);
 void update_status(int playerId, int site, int point, int money, int card,
                    TokaidoGame *tokaidoGame);
 void send_back_move(int move);
+void render_final_score(TokaidoGame *tokaidoGame, FILE *stream);
 
 #endif //TOKAIDO_2310A_GAME_H

@@ -52,3 +52,41 @@ int count_card(Player *player) {
     }
     return result;
 }
+
+void convert_card_to_point(Player *player) {
+    while (1) {
+        int cardSet = 0;
+        for (int i = 0; i < 5; ++i) {
+            if (player->cards[i] != 0) {
+                cardSet++;
+                player->cards[i]--;
+            }
+        }
+        switch (cardSet) {
+            case 5:
+                player->point += 10;
+                break;
+            case 4:
+                player->point += 7;
+                break;
+            case 3:
+                player->point += 5;
+                break;
+            case 2:
+                player->point += 3;
+                break;
+            case 1:
+                player->point += 1;
+                break;
+        }
+        if (cardSet == 0) {
+            break;
+        }
+    }
+}
+
+void convert_v1_v2_to_point(Player *player) {
+    player->point += player->v1 + player->v2;
+    player->v1 = 0;
+    player->v2 = 0;
+}

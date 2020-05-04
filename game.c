@@ -22,7 +22,7 @@ String *read_path() {
     return path;
 }
 
-void load_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
+void load_player_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     if (argc != 3) {
         throw_error(BAD_ARGUMENTS);
     }
@@ -129,6 +129,7 @@ void start(TokaidoGame *tokaidoGame) {
         endGame = !process(message, tokaidoGame);
         free_string(message);
     }
+    render_final_score(tokaidoGame, stderr);
 }
 
 void render(TokaidoGame *tokaidoGame, FILE *stream) {
@@ -387,4 +388,17 @@ void send_back_move(int move) {
     write_string_to_stream("DO", stdout);
     write_int_to_stream(move, stdout);
     write_char_to_stream('\n', stdout);
+}
+
+void render_final_score(TokaidoGame *tokaidoGame, FILE *stream) {
+    write_string_to_stream("Scores: ", stream);
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        convert_card_to_point(&tokaidoGame->players[i]);
+        convert_v1_v2_to_point(&tokaidoGame->players[i]);
+        write_int_to_stream(tokaidoGame->players[i].point, stream);
+        if (i != tokaidoGame->playerCount - 1) {
+            write_char_to_stream(',', stream);
+        }
+    }
+    write_char_to_stream('\n', stream);
 }
