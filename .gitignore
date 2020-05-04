@@ -153,7 +153,7 @@ fabric.properties
 ## Plugin-specific files:
 
 # IntelliJ
-/out/
+/test/
 2310A
 2310B
 2310dealer
