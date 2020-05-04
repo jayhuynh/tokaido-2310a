@@ -34,7 +34,11 @@ typedef struct {
 
 Path *initialize_path();
 
+void free_path(Path *path);
+
 Site *initialize_sites(int siteCount);
+
+void free_sites(Site *sites);
 
 void add_player(Player *player, Site *site);
 

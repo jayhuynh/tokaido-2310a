@@ -21,6 +21,10 @@ Player *initialize_players(int playerCount) {
     return newPlayers;
 }
 
+void free_players(Player *players){
+    free(players);
+}
+
 void render_player(Player *player, FILE *stream) {
     write_string_to_stream("Player ", stream);
     write_int_to_stream(player->id, stream);

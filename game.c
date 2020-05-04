@@ -15,6 +15,12 @@ TokaidoGame *initialize_tokaido_game() {
     return newTokaidoGame;
 }
 
+void free_tokaido_game(TokaidoGame *tokaidoGame) {
+    free_path(tokaidoGame->path);
+    free_players(tokaidoGame->players);
+    free(tokaidoGame);
+}
+
 String *read_path() {
     write_string_to_stream("^", stdout);
     String *path = initialize_string();

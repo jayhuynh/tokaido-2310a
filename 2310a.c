@@ -6,5 +6,6 @@ int main(int argc, char **argv) {
     load_player_arguments(argc, argv, tokaidoGame);
     load_path(tokaidoGame);
     start(tokaidoGame);
+    free_tokaido_game(tokaidoGame);
     return 0;
 }

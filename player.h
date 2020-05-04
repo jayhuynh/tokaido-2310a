@@ -20,6 +20,7 @@ typedef struct {
 } Player;
 
 Player *initialize_players(int playerCount);
+void free_players(Player *players);
 void render_player(Player *player, FILE *stream);
 int count_card(Player *player);
 void convert_card_to_point(Player *player);

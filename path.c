@@ -10,6 +10,11 @@ Path *initialize_path() {
     return newPath;
 }
 
+void free_path(Path *path) {
+    free_sites(path->sites);
+    free(path);
+}
+
 Site *initialize_sites(int siteCount) {
     Site *newSites = malloc(sizeof(Site) * siteCount);
     for (int i = 0; i < siteCount; ++i) {
@@ -17,6 +22,10 @@ Site *initialize_sites(int siteCount) {
         newSites[i].isFull = false;
     }
     return newSites;
+}
+
+void free_sites(Site *sites) {
+    free(sites);
 }
 
 void add_player(Player *player, Site *site) {

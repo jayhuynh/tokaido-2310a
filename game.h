@@ -24,6 +24,7 @@ typedef struct {
 } TokaidoGame;
 
 TokaidoGame *initialize_tokaido_game();
+void free_tokaido_game(TokaidoGame *tokaidoGame);
 String *read_path();
 void load_player_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
 void load_path(TokaidoGame* tokaidoGame);
