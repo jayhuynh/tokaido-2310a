@@ -18,6 +18,7 @@ typedef struct {
     Path *path;
     Player *players;
     char *deck;
+    int deckOffset;
     int myId;
     char myPlayerType;
     int playerCount;
@@ -25,12 +26,13 @@ typedef struct {
 
 TokaidoGame *initialize_tokaido_game();
 void free_tokaido_game(TokaidoGame *tokaidoGame);
-String *read_path();
+String *read_path(FILE *stream);
 void load_player_arguments(int argc, char **argv, TokaidoGame*tokaidoGame);
-void load_path(TokaidoGame* tokaidoGame);
+void load_player_path(TokaidoGame* tokaidoGame);
+void validate_path(String *path, TokaidoGame *tokaidoGame, Error type);
 void load_site(char firstCharacter, char secondCharacter, char capacity,
-               Site *site, int maxCapacity);
-void start(TokaidoGame *tokaidoGame);
+               Site *site, int maxCapacity, Error pathError);
+void start_player_game(TokaidoGame *tokaidoGame);
 void render(TokaidoGame *tokaidoGame, FILE *stream);
 void add_all_player_first_barrier(TokaidoGame *tokaidoGame);
 String *read_message();
@@ -49,5 +51,9 @@ void update_status(int playerId, int site, int point, int money, int card,
                    TokaidoGame *tokaidoGame);
 void send_back_move(int move);
 void render_final_score(TokaidoGame *tokaidoGame, FILE *stream);
+void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame);
+String *read_deck(FILE *stream);
+void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError);
+void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame);
 
 #endif //TOKAIDO_2310A_GAME_H

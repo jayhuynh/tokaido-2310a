@@ -9,13 +9,19 @@
 #include <stdlib.h>
 
 typedef enum {
-    OK = 0,
-    BAD_ARGUMENTS = 1,
-    BAD_PLAYER_COUNT = 2,
-    BAD_PLAYER_ID = 3,
-    BAD_PATH = 4,
-    EARLY_GAME_OVER = 5,
-    BAD_COMMUNICATIONS = 6
+    PLAYER_OK = 0,
+    PLAYER_ARGUMENTS = 1,
+    PLAYER_COUNT = 2,
+    PLAYER_ID = 3,
+    PLAYER_PATH = 4,
+    PLAYER_EARLY_GAME_OVER = 5,
+    PLAYER_COMMUNICATIONS = 6,
+    DEALER_OK = 7,
+    DEALER_ARGUMENTS = 8,
+    DEALER_DECK = 9,
+    DEALER_PATH = 10,
+    DEALER_STARTING_PROCESS = 11,
+    DEALER_COMMUNICATIONS = 12
 } Error;
 
 void throw_error(Error type);

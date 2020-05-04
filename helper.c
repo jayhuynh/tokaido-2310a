@@ -35,7 +35,7 @@ void write_int_to_stream(int input, FILE *stream) {
     fflush(stream);
 }
 
-void read_from_stream(String *output, FILE *stream) {
+void read_from_stream(String *output, FILE *stream, Error type) {
     size_t current = 0;
     (output->buffer)[0] = '\0';
     int input;
@@ -51,7 +51,7 @@ void read_from_stream(String *output, FILE *stream) {
         (output->buffer)[++current] = '\0';
     }
     if (input == EOF && output->length == 0) {
-        throw_error(BAD_COMMUNICATIONS);
+        throw_error(type);
     }
 }
 

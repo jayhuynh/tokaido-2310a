@@ -12,27 +12,48 @@
 void throw_error(Error type) {
     const char *message = "";
     switch (type) {
-        case BAD_ARGUMENTS:
+        case PLAYER_OK:
+            break;
+        case PLAYER_ARGUMENTS:
             message = "Usage: player pcount ID";
             break;
-        case BAD_PLAYER_COUNT:
+        case PLAYER_COUNT:
             message = "Invalid player count";
             break;
-        case BAD_PLAYER_ID:
+        case PLAYER_ID:
             message = "Invalid ID";
             break;
-        case BAD_PATH:
+        case PLAYER_PATH:
             message = "Invalid path";
             break;
-        case EARLY_GAME_OVER:
+        case PLAYER_EARLY_GAME_OVER:
             message = "Early game over";
             break;
-        case BAD_COMMUNICATIONS:
+        case PLAYER_COMMUNICATIONS:
             message = "Communications error";
             break;
-        case OK:
+        case DEALER_OK:
+            break;
+        case DEALER_ARGUMENTS:
+            message = "Usage: 2310dealer deck path p1 {p2}";
+            break;
+        case DEALER_DECK:
+            message = "Error reading deck";
+            break;
+        case DEALER_PATH:
+            message = "Error reading path";
+            break;
+        case DEALER_STARTING_PROCESS:
+            message = "Error starting process";
+            break;
+        case DEALER_COMMUNICATIONS:
+            message = "Communications error";
             break;
     }
     fprintf(stderr, "%s\n", message);
-    exit(type);
+    if (type > 6) {
+        exit((int) type - 7);
+    } else{
+        exit(type);
+    }
 }
