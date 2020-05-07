@@ -19,6 +19,7 @@ TokaidoGame *initialize_tokaido_game() {
 void free_tokaido_game(TokaidoGame *tokaidoGame) {
     free_path(tokaidoGame->path);
     free_players(tokaidoGame->players);
+    free(tokaidoGame->deck);
     free(tokaidoGame);
 }
 
@@ -58,7 +59,11 @@ void load_player_path(TokaidoGame *tokaidoGame) {
 
 void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
     tokaidoGame->path = initialize_path();
-    char *siteCount = strtok(path->buffer, ";");
+    tokaidoGame->path->stringFormat = path;
+    char *temporaryPath = malloc(sizeof(char) * path->length);
+
+    strcpy(temporaryPath, path->buffer);
+    char *siteCount = strtok(temporaryPath, ";");
     char *sites = strtok(NULL, ";");
 
     if (siteCount == NULL || sites == NULL ||
@@ -84,7 +89,7 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
         Barrier) {
         throw_error(pathError);
     }
-    free_string(path);
+    free(temporaryPath);
 }
 
 void load_site(char firstCharacter, char secondCharacter, char capacity,
@@ -137,8 +142,8 @@ void start_player_game(TokaidoGame *tokaidoGame) {
     add_all_player_first_barrier(tokaidoGame);
     render(tokaidoGame, stderr);
     while (!endGame) {
-        String *message = read_message();
-        endGame = !process(message, tokaidoGame);
+        String *message = read_message(stdin, PLAYER_COMMUNICATIONS);
+        endGame = !player_processor(message, tokaidoGame);
         free_string(message);
     }
     render_final_score(tokaidoGame, stderr);
@@ -181,13 +186,13 @@ void add_all_player_first_barrier(TokaidoGame *tokaidoGame) {
     }
 }
 
-String *read_message() {
+String *read_message(FILE *stream, Error type) {
     String *message = initialize_string();
-    read_from_stream(message, stdin, PLAYER_COMMUNICATIONS);
+    read_from_stream(message, stream, type);
     return message;
 }
 
-bool process(String *message, TokaidoGame *tokaidoGame) {
+bool player_processor(String *message, TokaidoGame *tokaidoGame) {
     if (strcmp(message->buffer, "YT") == 0) {
         int move = -1;
         if (tokaidoGame->myPlayerType == 'A') {
@@ -382,15 +387,22 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
     update_status(playerId, site, point, money, card, tokaidoGame);
 }
 
-void update_status(int playerId, int siteIndex, int point, int money, int card,
-                   TokaidoGame *tokaidoGame) {
+void
+update_status(int playerId, int siteIndex, int point, int money, int cardType,
+              TokaidoGame *tokaidoGame) {
     Player *player = &tokaidoGame->players[playerId];
+    Site *site = &tokaidoGame->path->sites[siteIndex];
     remove_player(player, &tokaidoGame->path->sites[player->currentSite]);
-    add_player(player, &tokaidoGame->path->sites[siteIndex]);
+    add_player(player, site);
     player->point += point;
     player->money += money;
-    if (card != 0) {
-        player->cards[card - 1]++;
+    if (site->type == V1) {
+        player->v1++;
+    } else if (site->type == V2) {
+        player->v2++;
+    }
+    if (cardType != 0) {
+        player->cards[cardType - 1]++;
     }
     render_player(player, stderr);
     render(tokaidoGame, stderr);
@@ -419,6 +431,7 @@ void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     if (argc < 4) {
         throw_error(DEALER_ARGUMENTS);
     }
+    tokaidoGame->playerCount = argc - 3;
 
     FILE *deckFile = fopen(argv[1], "r");
     if (deckFile == NULL || ferror(deckFile)) {
@@ -445,26 +458,198 @@ String *read_deck(FILE *stream) {
 
 void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError) {
     int cardCount = 0;
-    cardCount = (int) strtol(deck->buffer, &tokaidoGame->deck, 10);
+    char *cardsInDeck = "";
+    cardCount = (int) strtol(deck->buffer, &cardsInDeck, 10);
 
-    if (cardCount != strlen(tokaidoGame->deck) ||
+    if (cardCount != strlen(cardsInDeck) ||
         strcmp(deck->buffer, "") == 0 ||
         cardCount < 4) {
         throw_error(deckError);
     }
 
+    tokaidoGame->deck = malloc(sizeof(char) * cardCount + 1);
     for (int i = 0; i < cardCount; ++i) {
-        if (tokaidoGame->deck[i] < 'A' || tokaidoGame->deck[i] > 'C') {
+        if (cardsInDeck[i] < 'A' || cardsInDeck[i] > 'E') {
             throw_error(deckError);
+        } else {
+            tokaidoGame->deck[i] = cardsInDeck[i];
         }
     }
+    tokaidoGame->deck[cardCount] = '\0';
 
     free_string(deck);
 }
 
 void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
-    tokaidoGame->playerCount = argc - 3;
     tokaidoGame->players = initialize_players(tokaidoGame->playerCount);
 
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        Player *player = &tokaidoGame->players[i];
+        char playerCount[11];
+        char playerId[11];
+        sprintf(playerCount, "%d", tokaidoGame->playerCount);
+        sprintf(playerId, "%d", i);
+        if (pipe(player->readPipe) == -1) {
+            throw_error(DEALER_STARTING_PROCESS);
+        }
+        if (pipe(player->writePipe) == -1) {
+            throw_error(DEALER_STARTING_PROCESS);
+        }
+        player->pid = fork();
+        if (player->pid == 0) {
+            dup2(player->readPipe[READ], 0);
+            close(player->readPipe[WRITE]);
+            dup2(player->writePipe[WRITE], 1);
+            close(player->writePipe[READ]);
+            if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
+                      NULL) == -1) {
+                throw_error(DEALER_STARTING_PROCESS);
+            }
+        } else {
+            close(player->readPipe[READ]);
+            close(player->writePipe[WRITE]);
+            player->inputStream = fdopen(player->readPipe[WRITE], "w");
+            player->outputStream = fdopen(player->writePipe[READ], "r");
+        }
+    }
+}
 
+void start_dealer_game(TokaidoGame *tokaidoGame) {
+    bool endGame = false;
+    add_all_player_first_barrier(tokaidoGame);
+    send_path_to_all_player(tokaidoGame);
+    render(tokaidoGame, stdout);
+    while (!endGame) {
+        Player *nextTurnPlayer = get_next_turn_player(tokaidoGame);
+        request_a_move(nextTurnPlayer);
+        String *message = read_message(nextTurnPlayer->outputStream,
+                                       DEALER_COMMUNICATIONS);
+        dealer_processor(message, tokaidoGame, nextTurnPlayer);
+        render_player(nextTurnPlayer, stdout);
+        render(tokaidoGame, stdout);
+        endGame = tokaidoGame->path->sites[tokaidoGame->path->siteCount -
+                                           1].isFull;
+        free_string(message);
+    }
+    notice_end_game_to_all_players(tokaidoGame);
+    render_final_score(tokaidoGame, stdout);
+}
+
+Player *get_next_turn_player(TokaidoGame *tokaidoGame) {
+    Site *sites = tokaidoGame->path->sites;
+    int playerId = -1;
+    for (int i = 0; i < tokaidoGame->path->siteCount; ++i) {
+        if (sites[i].visitingOffset != -1) {
+            playerId = sites[i].visitingPlayersId[sites[i].visitingOffset];
+            break;
+        }
+    }
+
+    if (playerId == -1) {
+        throw_error(DEALER_COMMUNICATIONS);
+    }
+    return &tokaidoGame->players[playerId];
+}
+
+void send_path_to_all_player(TokaidoGame *tokaidoGame) {
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        Player *player = &tokaidoGame->players[i];
+        String *message = read_message(player->outputStream,
+                                       DEALER_COMMUNICATIONS);
+        if (strcmp(message->buffer, "^") == 0) {
+            write_string_to_stream(tokaidoGame->path->stringFormat->buffer,
+                                   player->inputStream);
+            write_char_to_stream('\n', player->inputStream);
+        } else {
+            throw_error(DEALER_COMMUNICATIONS);
+        }
+    }
+}
+
+void request_a_move(Player *player) {
+    write_string_to_stream("YT\n", player->inputStream);
+}
+
+void dealer_processor(String *message, TokaidoGame *tokaidoGame,
+                      Player *nextTurnPlayer) {
+    Path *path = tokaidoGame->path;
+    if (message->length > 2 && message->buffer[0] == 'D' &&
+        message->buffer[1] == 'O') {
+        int move = string_to_int(message->buffer + 2, DEALER_COMMUNICATIONS);
+        if (move > nextTurnPlayer->currentSite &&
+            move < path->siteCount &&
+            !path->sites[move].isFull) {
+            remove_player(nextTurnPlayer,
+                          &path->sites[nextTurnPlayer->currentSite]);
+            add_player(nextTurnPlayer, &path->sites[move]);
+            int additionalPoints = 0;
+            int changeInMoney = 0;
+            int cardType = 0;
+            switch (path->sites[move].type) {
+                case Mo:
+                    nextTurnPlayer->money += 3;
+                    changeInMoney += 3;
+                    break;
+                case V1:
+                    nextTurnPlayer->v1++;
+                    break;
+                case V2:
+                    nextTurnPlayer->v2++;
+                    break;
+                case Do:
+                    additionalPoints = nextTurnPlayer->money / 2;
+                    nextTurnPlayer->point += additionalPoints;
+                    changeInMoney -= nextTurnPlayer->money;
+                    nextTurnPlayer->money = 0;
+                    break;
+                case Ri:
+                    cardType = draw_card_from_deck(tokaidoGame, nextTurnPlayer);
+                    break;
+                case Barrier:
+                    break;
+            }
+            notice_to_all_players(nextTurnPlayer->id, move, additionalPoints,
+                                  changeInMoney, cardType, tokaidoGame);
+        } else {
+            throw_error(DEALER_COMMUNICATIONS);
+        }
+    } else {
+        throw_error(DEALER_COMMUNICATIONS);
+    }
+}
+
+void notice_to_all_players(int playerId, int newSite, int additionalPoints,
+                           int changeInMoney, int cardType,
+                           TokaidoGame *tokaidoGame) {
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        FILE *playerInputStream = tokaidoGame->players[i].inputStream;
+        write_string_to_stream("HAP", playerInputStream);
+        write_int_to_stream(playerId, playerInputStream);
+        write_char_to_stream(',', playerInputStream);
+        write_int_to_stream(newSite, playerInputStream);
+        write_char_to_stream(',', playerInputStream);
+        write_int_to_stream(additionalPoints, playerInputStream);
+        write_char_to_stream(',', playerInputStream);
+        write_int_to_stream(changeInMoney, playerInputStream);
+        write_char_to_stream(',', playerInputStream);
+        write_int_to_stream(cardType, playerInputStream);
+        write_char_to_stream('\n', playerInputStream);
+    }
+}
+
+int draw_card_from_deck(TokaidoGame *tokaidoGame, Player *player) {
+    char card = tokaidoGame->deck[tokaidoGame->deckOffset++];
+    int cardType = card - 'A' + 1;
+    player->cards[cardType - 1]++;
+    if (tokaidoGame->deckOffset == strlen(tokaidoGame->deck)) {
+        tokaidoGame->deckOffset = 0;
+    }
+    return cardType;
+}
+
+void notice_end_game_to_all_players(TokaidoGame *tokaidoGame) {
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        FILE *playerInputStream = tokaidoGame->players[i].inputStream;
+        write_string_to_stream("DONE\n", playerInputStream);
+    }
 }

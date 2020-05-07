@@ -49,6 +49,9 @@ void read_from_stream(String *output, FILE *stream, Error type) {
         (output->buffer)[current] = (char) input;
         output->length++;
         (output->buffer)[++current] = '\0';
+        if (type == DEALER_COMMUNICATIONS && (char) input == '^'){
+            break;
+        }
     }
     if (input == EOF && output->length == 0) {
         throw_error(type);

@@ -14,6 +14,9 @@ Player *initialize_players(int playerCount) {
         newPlayers[i].v2 = 0;
         newPlayers[i].money = 7;
         newPlayers[i].cards = malloc(sizeof(int) * 5);
+        newPlayers[i].inputStream = NULL;
+        newPlayers[i].outputStream = NULL;
+        newPlayers[i].pid = 0;
         for (int j = 0; j < 5; ++j) {
             newPlayers[i].cards[j] = 0;
         }
@@ -21,7 +24,7 @@ Player *initialize_players(int playerCount) {
     return newPlayers;
 }
 
-void free_players(Player *players){
+void free_players(Player *players) {
     free(players);
 }
 

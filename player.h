@@ -17,6 +17,11 @@ typedef struct {
     int v2;
     int money;
     int *cards;
+    int readPipe[2];
+    int writePipe[2];
+    FILE *inputStream;
+    FILE *outputStream;
+    pid_t  pid;
 } Player;
 
 Player *initialize_players(int playerCount);

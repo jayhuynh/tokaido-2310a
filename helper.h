@@ -9,6 +9,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include "error.h"
+#include "unistd.h"
+#define READ 0
+#define WRITE 1
 
 typedef struct {
     char* buffer;

@@ -23,6 +23,7 @@ typedef struct {
     char *label;
     int capacity;
     int *visitingPlayersId;
+    int visitingOffset;
     int index;
     bool isFull;
 } Site;
@@ -30,6 +31,7 @@ typedef struct {
 typedef struct {
     int siteCount;
     Site *sites;
+    String *stringFormat;
 } Path;
 
 Path *initialize_path();
