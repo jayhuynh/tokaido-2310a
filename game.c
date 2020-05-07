@@ -563,7 +563,7 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         Player *player = &tokaidoGame->players[i];
         String *message = read_message(player->outputStream,
-                                       DEALER_COMMUNICATIONS);
+                                       DEALER_STARTING_PROCESS);
         if (strcmp(message->buffer, "^") == 0) {
             write_string_to_stream(tokaidoGame->path->stringFormat->buffer,
                                    player->inputStream);
