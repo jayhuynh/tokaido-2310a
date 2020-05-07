@@ -5,11 +5,11 @@
 #include "game.h"
 
 TokaidoGame *initialize_tokaido_game() {
-    if (catch_signal(SIGCHLD, handler_sigchild) == -1) {
-        fprintf(stderr, "Can't map handler");
-        exit(99);
-    }
-    isAChildDead = false;
+//    if (catch_signal(SIGCHLD, handler_sigchild) == -1) {
+//        fprintf(stderr, "Can't map handler");
+//        exit(99);
+//    }
+//    isAChildDead = false;
 
     TokaidoGame *newTokaidoGame = malloc(sizeof(TokaidoGame) * 1);
     newTokaidoGame->path = NULL;
@@ -520,9 +520,9 @@ void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
                 throw_error(DEALER_STARTING_PROCESS);
             }
         } else {
-            if (player->pid == -1) {
-                throw_error(DEALER_STARTING_PROCESS);
-            }
+//            if (player->pid == -1) {
+//                throw_error(DEALER_STARTING_PROCESS);
+//            }
             close(player->readPipe[READ]);
             close(player->writePipe[WRITE]);
             player->inputStream = fdopen(player->readPipe[WRITE], "w");
