@@ -5,6 +5,12 @@
 #include "game.h"
 
 TokaidoGame *initialize_tokaido_game() {
+    if (catch_signal(SIGCHLD, handler_sigchild) == -1) {
+        fprintf(stderr, "Can't map handler");
+        exit(99);
+    }
+    isAChildDead = false;
+
     TokaidoGame *newTokaidoGame = malloc(sizeof(TokaidoGame) * 1);
     newTokaidoGame->path = NULL;
     newTokaidoGame->deck = NULL;
@@ -269,7 +275,7 @@ bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
         }
     }
 
-    if(!path->sites[me->currentSite + 1].isFull){
+    if (!path->sites[me->currentSite + 1].isFull) {
         *move = me->currentSite + 1;
         return true;
     }
@@ -509,11 +515,14 @@ void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
             } else {
                 dup2(fileno(devNull), 2);
             }
-            if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
-                      NULL) == -1) {
+            if (execlp(argv[3 + i], argv[3 + i], playerCount, playerId,
+                       NULL) == -1) {
                 throw_error(DEALER_STARTING_PROCESS);
             }
         } else {
+            if (player->pid == -1) {
+                throw_error(DEALER_STARTING_PROCESS);
+            }
             close(player->readPipe[READ]);
             close(player->writePipe[WRITE]);
             player->inputStream = fdopen(player->readPipe[WRITE], "w");
@@ -528,6 +537,9 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
     send_path_to_all_player(tokaidoGame);
     render(tokaidoGame, stdout);
     while (!endGame) {
+        if (isAChildDead) {
+            throw_error(DEALER_COMMUNICATIONS);
+        }
         Player *nextTurnPlayer = get_next_turn_player(tokaidoGame);
         request_a_move(nextTurnPlayer);
         String *message = read_message(nextTurnPlayer->outputStream,
@@ -563,7 +575,7 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         Player *player = &tokaidoGame->players[i];
         String *message = read_message(player->outputStream,
-                                       DEALER_COMMUNICATIONS);
+                                       DEALER_STARTING_PROCESS);
         if (strcmp(message->buffer, "^") == 0) {
             write_string_to_stream(tokaidoGame->path->stringFormat->buffer,
                                    player->inputStream);

@@ -4,14 +4,6 @@
 
 #include "helper.h"
 
-//void debug_site(Site *site) {
-//    fprintf(stderr, "Label: %s; Visitingplayer: ", site->label);
-//    for (int i = 0; i < site->capacity; ++i) {
-//        fprintf(stderr, "%d, ", site->visitingPlayersId[i]);
-//    }
-//    fprintf(stderr, "\n");
-//}
-
 String *initialize_string() {
     String *newString = malloc(sizeof(String) * 1);
     newString->buffer = malloc(sizeof(char) * 40);
@@ -49,7 +41,7 @@ void read_from_stream(String *output, FILE *stream, Error type) {
         (output->buffer)[current] = (char) input;
         output->length++;
         (output->buffer)[++current] = '\0';
-        if (type == DEALER_COMMUNICATIONS && (char) input == '^'){
+        if (type == DEALER_COMMUNICATIONS && (char) input == '^') {
             break;
         }
     }
@@ -70,4 +62,16 @@ int string_to_int(char *input, Error type) {
         throw_error(type);
     }
     return result;
+}
+
+int catch_signal(int signal, void (*handler)(int)) {
+    struct sigaction action;
+    action.sa_handler = handler;
+    sigemptyset(&action.sa_mask);
+    action.sa_flags = SA_RESTART | SA_NOCLDSTOP;
+    return sigaction(signal, &action, NULL);
+}
+
+void handler_sigchild(int signal) {
+    isAChildDead = true;
 }
