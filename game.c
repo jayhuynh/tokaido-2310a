@@ -302,7 +302,7 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
 
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         if (tokaidoGame->players[i].id != tokaidoGame->myId) {
-            if (count_card(&tokaidoGame->players[i]) > count_card(me)) {
+            if (count_card(&tokaidoGame->players[i]) >= count_card(me)) {
                 haveMostCard = false;
             }
             if (count_card(&tokaidoGame->players[i]) != 0) {
