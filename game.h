@@ -61,6 +61,7 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame);
 void request_a_move(Player *player);
 void dealer_processor(String *message, TokaidoGame *tokaidoGame,
                       Player *nextTurnPlayer);
+bool is_move_valid(int move, TokaidoGame *tokaidoGame, Player *nextTurnPlayer);
 void notice_to_all_players(int playerId, int newSite, int additionalPoints,
                            int changeInMoney, int cardType,
                            TokaidoGame *tokaidoGame);

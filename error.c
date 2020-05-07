@@ -44,7 +44,7 @@ void throw_error(Error type) {
             message = "Error reading path";
             break;
         case DEALER_STARTING_PROCESS:
-            message = "Error starting player_processor";
+            message = "Error starting player process";
             break;
         case DEALER_COMMUNICATIONS:
             message = "Communications error";

@@ -263,17 +263,17 @@ bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
 
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         if (tokaidoGame->players[i].id != tokaidoGame->myId) {
-            if (path->sites[me->currentSite + 1].isFull ||
-                tokaidoGame->players[i].currentSite <= me->currentSite) {
-                break;
-            }
-            if (tokaidoGame->players[i].currentSite > me->currentSite &&
-                i == tokaidoGame->playerCount - 1) {
-                *move = me->currentSite + 1;
-                return true;
+            if (tokaidoGame->players[i].currentSite <= me->currentSite) {
+                return false;
             }
         }
     }
+
+    if(!path->sites[me->currentSite + 1].isFull){
+        *move = me->currentSite + 1;
+        return true;
+    }
+
     return false;
 }
 
@@ -439,6 +439,7 @@ void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     } else {
         String *deck = read_deck(deckFile);
         validate_deck(deck, tokaidoGame, DEALER_DECK);
+        fclose(deckFile);
     }
 
     FILE *pathFile = fopen(argv[2], "r");
@@ -447,6 +448,7 @@ void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     } else {
         String *path = read_path(pathFile);
         validate_path(path, tokaidoGame, DEALER_PATH);
+        fclose(pathFile);
     }
 }
 
@@ -501,6 +503,12 @@ void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
             close(player->readPipe[WRITE]);
             dup2(player->writePipe[WRITE], 1);
             close(player->writePipe[READ]);
+            FILE *devNull = fopen("/dev/null", "w");
+            if (devNull == NULL || ferror(devNull)) {
+                throw_error(DEALER_STARTING_PROCESS);
+            } else {
+                dup2(fileno(devNull), 2);
+            }
             if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
                       NULL) == -1) {
                 throw_error(DEALER_STARTING_PROCESS);
@@ -576,9 +584,7 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
     if (message->length > 2 && message->buffer[0] == 'D' &&
         message->buffer[1] == 'O') {
         int move = string_to_int(message->buffer + 2, DEALER_COMMUNICATIONS);
-        if (move > nextTurnPlayer->currentSite &&
-            move < path->siteCount &&
-            !path->sites[move].isFull) {
+        if (is_move_valid(move, tokaidoGame, nextTurnPlayer)) {
             remove_player(nextTurnPlayer,
                           &path->sites[nextTurnPlayer->currentSite]);
             add_player(nextTurnPlayer, &path->sites[move]);
@@ -616,6 +622,21 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
     } else {
         throw_error(DEALER_COMMUNICATIONS);
     }
+}
+
+bool is_move_valid(int move, TokaidoGame *tokaidoGame, Player *nextTurnPlayer) {
+    Path *path = tokaidoGame->path;
+    if (move > nextTurnPlayer->currentSite &&
+        move < path->siteCount &&
+        !path->sites[move].isFull) {
+        for (int i = nextTurnPlayer->currentSite + 1; i < move; ++i) {
+            if (path->sites[i].type == Barrier) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return false;
 }
 
 void notice_to_all_players(int playerId, int newSite, int additionalPoints,
