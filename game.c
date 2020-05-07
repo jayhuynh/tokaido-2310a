@@ -515,7 +515,7 @@ void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
             } else {
                 dup2(fileno(devNull), 2);
             }
-            if (execlp(argv[3 + i], argv[3 + i], playerCount, playerId,
+            if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
                        NULL) == -1) {
                 throw_error(DEALER_STARTING_PROCESS);
             }
