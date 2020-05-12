@@ -27,6 +27,6 @@ all: 2310A 2310B 2310dealer
 
 clean:
 	rm -rf obj
-	rm 2310a
-	rm 2310b
+	rm 2310A
+	rm 2310B
 	rm 2310dealer

@@ -15,8 +15,6 @@
 #define READ 0
 #define WRITE 1
 
-volatile bool isAChildDead;
-
 typedef struct {
     char* buffer;
     size_t capacity;
@@ -31,6 +29,6 @@ void read_from_stream(String *output, FILE* stream, Error type);
 void free_string(String *string);
 int string_to_int(char *input, Error type);
 int catch_signal(int signal, void (*handler)(int));
-void handler_sigchild(int signal);
+void handler_sighup(int signal);
 
 #endif //TOKAIDO_2310A_HELPER_H

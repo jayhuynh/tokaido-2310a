@@ -72,6 +72,7 @@ int catch_signal(int signal, void (*handler)(int)) {
     return sigaction(signal, &action, NULL);
 }
 
-void handler_sigchild(int signal) {
-    isAChildDead = true;
+void handler_sighup(int signal) {
+    kill(-1 * getpid(), SIGKILL);
+    exit(6);
 }

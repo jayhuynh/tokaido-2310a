@@ -59,12 +59,13 @@ Player *get_next_turn_player(TokaidoGame *tokaidoGame);
 void send_path_to_all_player(TokaidoGame *tokaidoGame);
 void request_a_move(Player *player);
 void dealer_processor(String *message, TokaidoGame *tokaidoGame,
-                      Player *nextTurnPlayer);
+                      Player *nextTurnPlayer, bool *earlyEndGame);
 bool is_move_valid(int move, TokaidoGame *tokaidoGame, Player *nextTurnPlayer);
 void notice_to_all_players(int playerId, int newSite, int additionalPoints,
                            int changeInMoney, int cardType,
                            TokaidoGame *tokaidoGame);
 int draw_card_from_deck(TokaidoGame *tokaidoGame, Player *player);
 void notice_end_game_to_all_players(TokaidoGame *tokaidoGame);
+void notice_early_game_over_to_all_players(TokaidoGame *tokaidoGame);
 
 #endif //TOKAIDO_2310A_GAME_H

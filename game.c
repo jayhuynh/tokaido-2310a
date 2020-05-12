@@ -5,12 +5,6 @@
 #include "game.h"
 
 TokaidoGame *initialize_tokaido_game() {
-    if (catch_signal(SIGCHLD, handler_sigchild) == -1) {
-        fprintf(stderr, "Can't map handler");
-        exit(99);
-    }
-    isAChildDead = false;
-
     TokaidoGame *newTokaidoGame = malloc(sizeof(TokaidoGame) * 1);
     newTokaidoGame->path = NULL;
     newTokaidoGame->deck = NULL;
@@ -168,9 +162,13 @@ void render(TokaidoGame *tokaidoGame, FILE *stream) {
         for (int j = 0; j < path->siteCount; ++j) {
             if (i < path->sites[j].capacity) {
                 if (path->sites[j].visitingPlayersId[i] != -1) {
-                    write_char_to_stream(
-                            path->sites[j].visitingPlayersId[i] + '0', stream);
-                    write_string_to_stream("  ", stream);
+                    write_int_to_stream(
+                            path->sites[j].visitingPlayersId[i], stream);
+                    if (path->sites[j].visitingPlayersId[i] < 10) {
+                        write_string_to_stream("  ", stream);
+                    } else if (path->sites[j].visitingPlayersId[i] < 100) {
+                        write_string_to_stream(" ", stream);
+                    }
                     renderedPlayer++;
                 } else {
                     write_string_to_stream("   ", stream);
@@ -516,7 +514,7 @@ void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
                 dup2(fileno(devNull), 2);
             }
             if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
-                       NULL) == -1) {
+                      NULL) == -1) {
                 throw_error(DEALER_STARTING_PROCESS);
             }
         } else {
@@ -533,18 +531,20 @@ void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
 
 void start_dealer_game(TokaidoGame *tokaidoGame) {
     bool endGame = false;
+    bool earlyEndGame = false;
     add_all_player_first_barrier(tokaidoGame);
     send_path_to_all_player(tokaidoGame);
     render(tokaidoGame, stdout);
     while (!endGame) {
-        if (isAChildDead) {
-            throw_error(DEALER_COMMUNICATIONS);
-        }
         Player *nextTurnPlayer = get_next_turn_player(tokaidoGame);
         request_a_move(nextTurnPlayer);
         String *message = read_message(nextTurnPlayer->outputStream,
                                        DEALER_COMMUNICATIONS);
-        dealer_processor(message, tokaidoGame, nextTurnPlayer);
+        dealer_processor(message, tokaidoGame, nextTurnPlayer, &earlyEndGame);
+        if (earlyEndGame) {
+            notice_early_game_over_to_all_players(tokaidoGame);
+            throw_error(DEALER_COMMUNICATIONS);
+        }
         render_player(nextTurnPlayer, stdout);
         render(tokaidoGame, stdout);
         endGame = tokaidoGame->path->sites[tokaidoGame->path->siteCount -
@@ -581,7 +581,7 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame) {
                                    player->inputStream);
             write_char_to_stream('\n', player->inputStream);
         } else {
-            throw_error(DEALER_COMMUNICATIONS);
+            throw_error(DEALER_STARTING_PROCESS);
         }
     }
 }
@@ -591,11 +591,15 @@ void request_a_move(Player *player) {
 }
 
 void dealer_processor(String *message, TokaidoGame *tokaidoGame,
-                      Player *nextTurnPlayer) {
+                      Player *nextTurnPlayer, bool *earlyEndGame) {
     Path *path = tokaidoGame->path;
     if (message->length > 2 && message->buffer[0] == 'D' &&
         message->buffer[1] == 'O') {
-        int move = string_to_int(message->buffer + 2, DEALER_COMMUNICATIONS);
+        char *error = "";
+        int move = (int) strtol(message->buffer + 2, &error, 10);
+        if (strcmp(error, "") != 0 || strcmp(message->buffer + 2, "") == 0) {
+            *earlyEndGame = true;
+        }
         if (is_move_valid(move, tokaidoGame, nextTurnPlayer)) {
             remove_player(nextTurnPlayer,
                           &path->sites[nextTurnPlayer->currentSite]);
@@ -629,10 +633,10 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
             notice_to_all_players(nextTurnPlayer->id, move, additionalPoints,
                                   changeInMoney, cardType, tokaidoGame);
         } else {
-            throw_error(DEALER_COMMUNICATIONS);
+            *earlyEndGame = true;
         }
     } else {
-        throw_error(DEALER_COMMUNICATIONS);
+        *earlyEndGame = true;
     }
 }
 
@@ -684,5 +688,12 @@ void notice_end_game_to_all_players(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         FILE *playerInputStream = tokaidoGame->players[i].inputStream;
         write_string_to_stream("DONE\n", playerInputStream);
+    }
+}
+
+void notice_early_game_over_to_all_players(TokaidoGame *tokaidoGame) {
+    for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        FILE *playerInputStream = tokaidoGame->players[i].inputStream;
+        write_string_to_stream("EARLY\n", playerInputStream);
     }
 }
