@@ -109,13 +109,13 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
     // After split have to guarantee that total size of all substring have to
     // equal to original string.
     if (siteCount == NULL || sites == NULL ||
-        strlen(siteCount) + strlen(sites) != (path->length - 1)) {
+            strlen(siteCount) + strlen(sites) != (path->length - 1)) {
         throw_error(pathError);
     }
 
     tokaidoGame->path->siteCount = string_to_int(siteCount, pathError);
     if ((tokaidoGame->path->siteCount * 3) != strlen(sites) ||
-        tokaidoGame->path->siteCount < 2) {
+            tokaidoGame->path->siteCount < 2) {
         throw_error(pathError);
     }
     tokaidoGame->path->sites = initialize_sites(tokaidoGame->path->siteCount);
@@ -123,14 +123,14 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
     // Loop through each sites and load detail to that site
     for (int i = 0, j = 0; i < strlen(sites); i += 3, j++) {
         load_site(sites[i], sites[i + 1], sites[i + 2],
-                  &tokaidoGame->path->sites[j], tokaidoGame->playerCount,
-                  pathError);
+                &tokaidoGame->path->sites[j], tokaidoGame->playerCount,
+                pathError);
     }
 
     // Check if the path must begin and end with SITE_BARRIER "::"
     if (tokaidoGame->path->sites[0].type != SITE_BARRIER ||
-        tokaidoGame->path->sites[tokaidoGame->path->siteCount - 1].type !=
-        SITE_BARRIER) {
+            tokaidoGame->path->sites[tokaidoGame->path->siteCount - 1].type !=
+            SITE_BARRIER) {
         throw_error(pathError);
     }
     free(temporaryPath);
@@ -316,7 +316,7 @@ bool player_processor(String *message, TokaidoGame *tokaidoGame) {
     } else if (strcmp(message->buffer, "DONE") == 0) {
         return false;
     } else if (message->length >= 12 && message->buffer[0] == 'H' &&
-               message->buffer[1] == 'A' && message->buffer[2] == 'P') {
+        message->buffer[1] == 'A' && message->buffer[2] == 'P') {
         player_make_a_move(message, tokaidoGame);
     } else {
         throw_error(PLAYER_COMMUNICATIONS);
@@ -336,15 +336,14 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     // If player have money and there is a SITE_DO site in front of
     if (me->money > 0) {
         if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame,
-                                                            SITE_DO,
-                                                            move)) {
+                SITE_DO, move)) {
             return;
         }
     }
 
     // If next site is SITE_MO and it is not full
     if (!path->sites[me->currentSite + 1].isFull &&
-        path->sites[me->currentSite + 1].type == SITE_MO) {
+            path->sites[me->currentSite + 1].type == SITE_MO) {
         *move = me->currentSite + 1;
         return;
     }
@@ -352,9 +351,9 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     // Pick the closest SITE_V1, SITE_V2 or SITE_BARRIER
     for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
         if (!path->sites[i].isFull &&
-            (path->sites[i].type == SITE_V1 ||
-             path->sites[i].type == SITE_V2 ||
-             path->sites[i].type == SITE_BARRIER)) {
+                (path->sites[i].type == SITE_V1 ||
+                path->sites[i].type == SITE_V2 ||
+                path->sites[i].type == SITE_BARRIER)) {
             *move = i;
             return;
         }
@@ -422,8 +421,7 @@ bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
 
     if (me->money % 2 == 1) {
         if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame,
-                                                            SITE_MO,
-                                                            move)) {
+                SITE_MO, move)) {
             return true;
         }
     }
