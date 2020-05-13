@@ -455,8 +455,7 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
 
     if (haveMostCard || everyoneHasZeroCard) {
         if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame,
-                                                            SITE_RI,
-                                                            move)) {
+                SITE_RI, move)) {
             return true;
         }
     }
@@ -473,7 +472,7 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
  */
 bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move) {
     if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, SITE_V2,
-                                                        move)) {
+            move)) {
         return true;
     }
 
@@ -538,8 +537,8 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
     char *cardStringFormat = strtok(NULL, ",");
 
     if (playerIdStringFormat == NULL || siteStringFormat == NULL ||
-        pointStringFormat == NULL ||
-        moneyStringFormat == NULL || cardStringFormat == NULL) {
+            pointStringFormat == NULL || moneyStringFormat == NULL ||
+            cardStringFormat == NULL) {
         throw_error(PLAYER_COMMUNICATIONS);
     }
     int playerId = string_to_int(playerIdStringFormat, PLAYER_COMMUNICATIONS);
@@ -562,9 +561,8 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
     update_status(playerId, site, point, money, card, tokaidoGame);
 }
 
-void
-update_status(int playerId, int siteIndex, int point, int money, int cardType,
-        TokaidoGame *tokaidoGame) {
+void update_status(int playerId, int siteIndex, int point, int money,
+        int cardType, TokaidoGame *tokaidoGame) {
     Player *player = &tokaidoGame->players[playerId];
     Site *site = &tokaidoGame->path->sites[siteIndex];
     remove_player(player, &tokaidoGame->path->sites[player->currentSite]);
@@ -639,8 +637,8 @@ void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError) {
     cardCount = (int) strtol(deck->buffer, &cardsInDeck, 10);
 
     if (cardCount != strlen(cardsInDeck) ||
-        strcmp(deck->buffer, "") == 0 ||
-        cardCount < 4) {
+            strcmp(deck->buffer, "") == 0 ||
+            cardCount < 4) {
         throw_error(deckError);
     }
 
@@ -685,7 +683,7 @@ void start_player_process(char **argv, TokaidoGame *tokaidoGame) {
                 dup2(fileno(devNull), 2);
             }
             if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
-                      NULL) == -1) {
+                    NULL) == -1) {
                 throw_error(DEALER_STARTING_PROCESS);
             }
         } else {
@@ -710,7 +708,7 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
         Player *nextTurnPlayer = get_next_turn_player(tokaidoGame);
         request_a_move(nextTurnPlayer);
         String *message = read_message(nextTurnPlayer->outputStream,
-                                       DEALER_COMMUNICATIONS);
+                DEALER_COMMUNICATIONS);
         dealer_processor(message, tokaidoGame, nextTurnPlayer, &earlyEndGame);
         if (earlyEndGame) {
             notice_early_game_over_to_all_players(tokaidoGame);
@@ -718,8 +716,8 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
         }
         render_player(nextTurnPlayer, stdout);
         render(tokaidoGame, stdout);
-        endGame = tokaidoGame->path->sites[tokaidoGame->path->siteCount -
-                                           1].isFull;
+        endGame = tokaidoGame->path
+                ->sites[tokaidoGame->path->siteCount - 1].isFull;
         free_string(message);
     }
     notice_end_game_to_all_players(tokaidoGame);
@@ -746,10 +744,10 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         Player *player = &tokaidoGame->players[i];
         String *message = read_message(player->outputStream,
-                                       DEALER_STARTING_PROCESS);
+                DEALER_STARTING_PROCESS);
         if (strcmp(message->buffer, "^") == 0) {
             write_string_to_stream(tokaidoGame->path->stringFormat->buffer,
-                                   player->inputStream);
+                    player->inputStream);
             write_char_to_stream('\n', player->inputStream);
         } else {
             throw_error(DEALER_STARTING_PROCESS);
@@ -765,7 +763,7 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
         Player *nextTurnPlayer, bool *earlyEndGame) {
     Path *path = tokaidoGame->path;
     if (message->length > 2 && message->buffer[0] == 'D' &&
-        message->buffer[1] == 'O') {
+            message->buffer[1] == 'O') {
         char *error = "";
         int move = (int) strtol(message->buffer + 2, &error, 10);
         if (strcmp(error, "") != 0 || strcmp(message->buffer + 2, "") == 0) {
@@ -773,7 +771,7 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
         }
         if (is_move_valid(move, tokaidoGame, nextTurnPlayer)) {
             remove_player(nextTurnPlayer,
-                          &path->sites[nextTurnPlayer->currentSite]);
+                    &path->sites[nextTurnPlayer->currentSite]);
             add_player(nextTurnPlayer, &path->sites[move]);
             int additionalPoints = 0;
             int changeInMoney = 0;
@@ -797,13 +795,13 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
                     break;
                 case SITE_RI:
                     cardType = draw_card_from_deck(tokaidoGame,
-                                                   nextTurnPlayer);
+                            nextTurnPlayer);
                     break;
                 case SITE_BARRIER:
                     break;
             }
             notice_to_all_players(nextTurnPlayer->id, move, additionalPoints,
-                                  changeInMoney, cardType, tokaidoGame);
+                    changeInMoney, cardType, tokaidoGame);
         } else {
             *earlyEndGame = true;
         }
@@ -816,8 +814,8 @@ bool is_move_valid(int move, TokaidoGame *tokaidoGame,
         Player *nextTurnPlayer) {
     Path *path = tokaidoGame->path;
     if (move > nextTurnPlayer->currentSite &&
-        move < path->siteCount &&
-        !path->sites[move].isFull) {
+            move < path->siteCount &&
+            !path->sites[move].isFull) {
         for (int i = nextTurnPlayer->currentSite + 1; i < move; ++i) {
             if (path->sites[i].type == SITE_BARRIER) {
                 return false;
