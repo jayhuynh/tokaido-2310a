@@ -1017,7 +1017,7 @@ void check_child_process_status(TokaidoGame *tokaidoGame) {
         }
     }
 
-    if (isOneOfOurChildrenDead){
+    if (isOneOfOurChildrenDead) {
         for (int j = 0; j < tokaidoGame->playerCount; ++j) {
             // Only send dead to players who are alive
             if (!tokaidoGame->players[j].isDead) {
