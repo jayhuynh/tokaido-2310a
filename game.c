@@ -769,6 +769,8 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
     render(tokaidoGame, stdout);
     while (!endGame) {
         Player *nextTurnPlayer = get_next_turn_player(tokaidoGame);
+        // Check if there are any child process dead or not
+        check_child_process_status(tokaidoGame);
         // Request the mover from next turn player
         request_a_move(nextTurnPlayer);
         String *message = read_message(nextTurnPlayer->outputStream,
