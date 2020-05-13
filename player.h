@@ -41,6 +41,7 @@ typedef struct {
      */
     FILE *outputStream;
     pid_t pid; // Process id of player
+    bool isDead; // Check if this player process dead or not
 } Player;
 
 Player *initialize_players(int playerCount);

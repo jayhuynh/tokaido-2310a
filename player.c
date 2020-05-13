@@ -22,6 +22,7 @@ Player *initialize_players(int playerCount) {
         newPlayers[i].inputStream = NULL;
         newPlayers[i].outputStream = NULL;
         newPlayers[i].pid = 0;
+        newPlayers[i].isDead = false;
         for (int j = 0; j < 5; ++j) {
             newPlayers[i].cards[j] = 0;
         }

@@ -781,6 +781,8 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
             notice_early_game_over_to_all_players(tokaidoGame);
             throw_error(DEALER_COMMUNICATIONS);
         }
+        // Check if there are any child process dead or not
+        check_child_process_status(tokaidoGame);
         render_player(nextTurnPlayer, stdout);
         render(tokaidoGame, stdout);
         // If the last barrier site is fill the game will end
@@ -790,6 +792,7 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
     }
     notice_end_game_to_all_players(tokaidoGame);
     render_final_score(tokaidoGame, stdout);
+    wait(NULL);
 }
 
 /**
@@ -992,5 +995,34 @@ void notice_early_game_over_to_all_players(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         FILE *playerInputStream = tokaidoGame->players[i].inputStream;
         write_string_to_stream("EARLY\n", playerInputStream);
+    }
+}
+
+/**
+ * Check if there are any child process dead or not.
+ * If there is one process dead we will end the game and send early game over
+ * @param tokaidoGame : the game we are running
+ */
+void check_child_process_status(TokaidoGame *tokaidoGame) {
+    pid_t pid;
+    bool isOneOfOurChildrenDead = false;
+    while (pid = waitpid(-1, 0, WNOHANG), pid > 0) {
+        isOneOfOurChildrenDead = true;
+        for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+            if (tokaidoGame->players[i].pid == pid) {
+                tokaidoGame->players[i].isDead = true;
+            }
+        }
+    }
+
+    if (isOneOfOurChildrenDead){
+        for (int j = 0; j < tokaidoGame->playerCount; ++j) {
+            // Only send dead to players who are alive
+            if (!tokaidoGame->players[j].isDead) {
+                FILE *playerInputStream = tokaidoGame->players[j].inputStream;
+                write_string_to_stream("EARLY\n", playerInputStream);
+            }
+        }
+        throw_error(DEALER_COMMUNICATIONS);
     }
 }

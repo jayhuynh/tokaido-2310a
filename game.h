@@ -111,4 +111,6 @@ void notice_end_game_to_all_players(TokaidoGame *tokaidoGame);
 
 void notice_early_game_over_to_all_players(TokaidoGame *tokaidoGame);
 
+void check_child_process_status(TokaidoGame *tokaidoGame);
+
 #endif //TOKAIDO_2310A_GAME_H
