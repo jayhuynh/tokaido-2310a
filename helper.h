@@ -15,6 +15,9 @@
 #define READ 0
 #define WRITE 1
 
+/**
+ * Helper string custom data structure
+ */
 typedef struct {
     char* buffer;
     size_t capacity;

@@ -4,18 +4,28 @@
 
 #include "game.h"
 
+/**
+ * Allocate memory for a TokaidoGame
+ * @return TokaidoGame pointer to the space we allocated
+ */
 TokaidoGame *initialize_tokaido_game() {
     TokaidoGame *newTokaidoGame = malloc(sizeof(TokaidoGame) * 1);
     newTokaidoGame->path = NULL;
     newTokaidoGame->deck = NULL;
     newTokaidoGame->deckOffset = 0;
     newTokaidoGame->players = NULL;
-    newTokaidoGame->myId = 0;
+    newTokaidoGame->myId = -1;
     newTokaidoGame->myPlayerType = '\0';
     newTokaidoGame->playerCount = 0;
     return newTokaidoGame;
 }
 
+/**
+ * Deallocated a tokaido game and all of its attributes such as path, player
+ * list, deck
+ * @param tokaidoGame : TokaidoGame pointer - the target tokaido game we would
+ * like to deallocate
+ */
 void free_tokaido_game(TokaidoGame *tokaidoGame) {
     free_path(tokaidoGame->path);
     free_players(tokaidoGame->players);
@@ -23,12 +33,26 @@ void free_tokaido_game(TokaidoGame *tokaidoGame) {
     free(tokaidoGame);
 }
 
+/**
+ * Read a path from a specific stream and return a path in String datatype
+ * @param stream : File pointer - the stream we would like to read
+ * @return : String pointer - the String that contain path
+ */
 String *read_path(FILE *stream) {
     String *path = initialize_string();
     read_from_stream(path, stream, PLAYER_COMMUNICATIONS);
     return path;
 }
 
+/**
+ * Load and check the argument for player process
+ * The function will throw the corresponding error in case the argument count
+ * or one of the argument value is not valid
+ *
+ * @param argc : integer - argument count
+ * @param argv : string array - argument value
+ * @param tokaidoGame : the game that we will load the argument into
+ */
 void load_player_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     if (argc != 3) {
         throw_error(PLAYER_ARGUMENTS);
@@ -51,21 +75,39 @@ void load_player_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     }
 }
 
+/**
+ * Write the special character "^" to stdout to ask for the path
+ * Then read the path from it
+ * After that we validate the path
+ * @param tokaidoGame : the current game we are setting the path
+ */
 void load_player_path(TokaidoGame *tokaidoGame) {
     write_string_to_stream("^", stdout);
     String *path = read_path(stdin);
     validate_path(path, tokaidoGame, PLAYER_PATH);
 }
 
+/**
+ * Validate the path then load it into the game
+ *
+ * @param path
+ * @param tokaidoGame
+ * @param pathError
+ */
 void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
     tokaidoGame->path = initialize_path();
     tokaidoGame->path->stringFormat = path;
     char *temporaryPath = malloc(sizeof(char) * path->length);
 
+    // Use temporaryPath because the function strtok() will change the string
+    // we pass into it
     strcpy(temporaryPath, path->buffer);
+    //Split the path base on ";"
     char *siteCount = strtok(temporaryPath, ";");
     char *sites = strtok(NULL, ";");
 
+    // After split have to guarantee that total size of all substring have to
+    // equal to original string.
     if (siteCount == NULL || sites == NULL ||
         strlen(siteCount) + strlen(sites) != (path->length - 1)) {
         throw_error(pathError);
@@ -78,12 +120,14 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
     }
     tokaidoGame->path->sites = initialize_sites(tokaidoGame->path->siteCount);
 
+    // Loop through each sites and load detail to that site
     for (int i = 0, j = 0; i < strlen(sites); i += 3, j++) {
         load_site(sites[i], sites[i + 1], sites[i + 2],
                   &tokaidoGame->path->sites[j], tokaidoGame->playerCount,
                   pathError);
     }
 
+    // Check if the path must begin and end with Barrier "::"
     if (tokaidoGame->path->sites[0].type != Barrier ||
         tokaidoGame->path->sites[tokaidoGame->path->siteCount - 1].type !=
         Barrier) {
@@ -92,6 +136,20 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
     free(temporaryPath);
 }
 
+/**
+ * Load detail to a site
+ *
+ * @param firstCharacter : char - the first and second characters are used to
+ * classify this site type
+ * @param secondCharacter : char - the first and second characters are used to
+ * classify this site type
+ * @param capacity : integer - the capacity of the site
+ * @param site : Site pointer - the site that we will load into
+ * @param maxCapacity : the max capacity in this case is the amount of players
+ * in the game. If the site is Barrier "::" , it will have the max capacity
+ * @param pathError : Error enum type - during the load process if there is
+ * an error it will throw this error type
+ */
 void load_site(char firstCharacter, char secondCharacter, char capacity,
                Site *site, int maxCapacity, Error pathError) {
     SiteType type = Barrier;
@@ -120,6 +178,7 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
     site->type = type;
     site->label = label;
 
+    // Set the capacity base on type
     if (type != Barrier) {
         if (!isdigit(capacity) || capacity == '0') {
             throw_error(pathError);
@@ -137,6 +196,16 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
     }
 }
 
+/**
+ * The main game iteration of player
+ * At first we will add all player to the first barrier and render the game.
+ * After that we will go into loop for playing the game.
+ * In the loop, player will read the message from the dealer and process
+ * that message. If the message said that the game is end then it will break
+ * the loop and show the final score of the players.
+ *
+ * @param tokaidoGame : the target game that we are running
+ */
 void start_player_game(TokaidoGame *tokaidoGame) {
     bool endGame = false;
     add_all_player_first_barrier(tokaidoGame);
@@ -149,8 +218,15 @@ void start_player_game(TokaidoGame *tokaidoGame) {
     render_final_score(tokaidoGame, stderr);
 }
 
+/**
+ * Render the tokaidogame to a specific stream
+ *
+ * @param tokaidoGame : the target game we would like to render
+ * @param stream : the target stream we would like to print into
+ */
 void render(TokaidoGame *tokaidoGame, FILE *stream) {
     Path *path = tokaidoGame->path;
+    // Print the path first
     for (int i = 0; i < path->siteCount; ++i) {
         write_string_to_stream(path->sites[i].label, stream);
         write_string_to_stream(" ", stream);
@@ -158,22 +234,31 @@ void render(TokaidoGame *tokaidoGame, FILE *stream) {
     write_string_to_stream("\n", stream);
 
     int renderedPlayer = 0;
+    // Print players in each sites of the path
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         for (int j = 0; j < path->siteCount; ++j) {
             if (i < path->sites[j].capacity) {
                 if (path->sites[j].visitingPlayersId[i] != -1) {
                     write_int_to_stream(
                             path->sites[j].visitingPlayersId[i], stream);
+                    // In case the player's id has 1 digit we need to add
+                    // 2 more space in order to align with the path
                     if (path->sites[j].visitingPlayersId[i] < 10) {
                         write_string_to_stream("  ", stream);
+                        // In case the player's id has 2 digit we need to add
+                        // 1 more space in order to align with the path
                     } else if (path->sites[j].visitingPlayersId[i] < 100) {
                         write_string_to_stream(" ", stream);
                     }
                     renderedPlayer++;
                 } else {
+                    // In case if a place in that site is empty
+                    // we will print 3 space
                     write_string_to_stream("   ", stream);
                 }
             } else {
+                // If we reach out the capacity of the site, we also print
+                // 3 space
                 write_string_to_stream("   ", stream);
             }
         }
@@ -184,26 +269,46 @@ void render(TokaidoGame *tokaidoGame, FILE *stream) {
     }
 }
 
+/**
+ * Add add player to the first barrier in a tokaidogame
+ * @param tokaidoGame : the target game we would like to add
+ */
 void add_all_player_first_barrier(TokaidoGame *tokaidoGame) {
     for (int i = tokaidoGame->playerCount - 1; i > -1; i--) {
         add_player(&tokaidoGame->players[i], &tokaidoGame->path->sites[0]);
     }
 }
 
+/**
+ * Read a message from a specific stream . In case we have error during the
+ * reading process , it will throw the error type that we passed into
+ * @param stream : the stream we would like to read
+ * @param type : the error we would like to throw in case have error
+ * @return : the String contain message that we want to read
+ */
 String *read_message(FILE *stream, Error type) {
     String *message = initialize_string();
     read_from_stream(message, stream, type);
     return message;
 }
 
+/**
+ * The processor to process and classify the type of message
+ * @param message : the message that we will classify
+ * @param tokaidoGame : the current game we are running
+ * @return : if the player receive the ending message it will return true or
+ * it will return false to notice that the game is not end yet
+ */
 bool player_processor(String *message, TokaidoGame *tokaidoGame) {
     if (strcmp(message->buffer, "YT") == 0) {
         int move = -1;
+        // Get a move base on player type A or B
         if (tokaidoGame->myPlayerType == 'A') {
             get_a_move_of_player_type_a(tokaidoGame, &move);
         } else if (tokaidoGame->myPlayerType == 'B') {
             get_a_move_of_player_type_b(tokaidoGame, &move);
         }
+        // Send back move to dealer or we can say the stdout
         send_back_move(move);
     } else if (strcmp(message->buffer, "EARLY") == 0) {
         throw_error(PLAYER_EARLY_GAME_OVER);
@@ -218,10 +323,16 @@ bool player_processor(String *message, TokaidoGame *tokaidoGame) {
     return true;
 }
 
+/**
+ * Moving strategy for player type A
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign the new move into it
+ */
 void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
 
+    // If player have money and there is a Do site in front of
     if (me->money > 0) {
         if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Do,
                                                             move)) {
@@ -229,12 +340,14 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
         }
     }
 
+    // If next site is Mo and it is not full
     if (!path->sites[me->currentSite + 1].isFull &&
         path->sites[me->currentSite + 1].type == Mo) {
         *move = me->currentSite + 1;
         return;
     }
 
+    // Pick the closest V1, V2 or Barrier
     for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
         if (!path->sites[i].isFull &&
             (path->sites[i].type == V1 || path->sites[i].type == V2 ||
@@ -245,6 +358,11 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     }
 }
 
+/**
+ * Moving strategy for player type B
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign a new move to it
+ */
 void get_a_move_of_player_type_b(TokaidoGame *tokaidoGame, int *move) {
     if (get_a_move_other_player_later(tokaidoGame, move)) {
         return;
@@ -261,12 +379,20 @@ void get_a_move_of_player_type_b(TokaidoGame *tokaidoGame, int *move) {
     get_a_move_forward(tokaidoGame, move);
 }
 
+/**
+ * Move forward one site if other players are later than us
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign a new move to it
+ * @return : if this case is not possible it will return false to continue with
+ * the next case
+ */
 bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
 
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         if (tokaidoGame->players[i].id != tokaidoGame->myId) {
+            // If other players are sooner or equal us so this case will fail
             if (tokaidoGame->players[i].currentSite <= me->currentSite) {
                 return false;
             }
@@ -281,6 +407,13 @@ bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
     return false;
 }
 
+/**
+ * If we had odd money and there is a Mo between us and the next barrier
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign a new move to it
+ * @return : if this case is not possible it will return false to continue with
+ * the next case
+ */
 bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
 
@@ -293,6 +426,13 @@ bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
     return false;
 }
 
+/**
+ * If we had most card and there is a Ri between us and the next barrier
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign a new move to it
+ * @return : if this case is not possible it will return false to continue with
+ * the next case
+ */
 bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
     bool haveMostCard = true;
     bool everyoneHasZeroCard = true;
@@ -319,6 +459,13 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
     return false;
 }
 
+/**
+ * If there is a V2 between us and the next barrier
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign a new move to it
+ * @return : if this case is not possible it will return false to continue with
+ * the next case
+ */
 bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move) {
     if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, V2,
                                                         move)) {
@@ -328,6 +475,12 @@ bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move) {
     return false;
 }
 
+/**
+ * Move forward to the earliest site which has room
+ * @param tokaidoGame : the current game is running
+ * @param move : the variable that we will assign a new move to it
+ * @returnm : if this case is not possible it will return false
+ */
 bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
@@ -342,8 +495,16 @@ bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move) {
     return false;
 }
 
-int get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
-                                                    SiteType type, int *move) {
+/**
+ * Get a specific site between us and the next barrier
+ *
+ * @param tokaidoGame : the current game is running
+ * @param type : the site type we would like to find
+ * @param move : assign the result we want to this variable
+ * @return : if this case is not possible it will return false
+ */
+bool get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
+                                                     SiteType type, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
 
@@ -359,6 +520,11 @@ int get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
     return false;
 }
 
+/**
+ * Process the message in case it announces a player make a move
+ * @param message : detail of the move message
+ * @param tokaidoGame : the current game is running
+ */
 void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
     char *playerIdStringFormat = strtok(message->buffer + 3, ",");
     char *siteStringFormat = strtok(NULL, ",");
@@ -486,7 +652,7 @@ void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError) {
     free_string(deck);
 }
 
-void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame) {
+void start_player_process(char **argv, TokaidoGame *tokaidoGame) {
     tokaidoGame->players = initialize_players(tokaidoGame->playerCount);
 
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {

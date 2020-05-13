@@ -6,8 +6,10 @@
 
 /**
  * Print error message to stderr and exit the program base on error type
+ * Because I put dealer and player error together, I have to get the dealer
+ * error type - 7 in order to get the correct exit status number
  *
- * @param type
+ * @param Error type: is used to classify the type of error
  */
 void throw_error(Error type) {
     const char *message = "";

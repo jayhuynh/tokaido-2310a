@@ -8,6 +8,9 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/**
+ * Enum Error type which is used to throw corresponding error in the game
+ */
 typedef enum {
     PLAYER_OK = 0,
     PLAYER_ARGUMENTS = 1,

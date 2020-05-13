@@ -13,14 +13,21 @@
 #include <string.h>
 #include <ctype.h>
 
+/**
+ * The main TokaidoGame
+ */
 typedef struct {
-    Path *path;
-    Player *players;
-    char *deck;
-    int deckOffset;
+    Path *path; // Path for playing and let the players move on it
+    Player *players; // The list of players in our game
+    char *deck; // The deck list
+    int deckOffset; // The offset of the deck array
+    /**
+     * Because all process wil have this game. Therefore we need to identify
+     * between each process. The dealer will have myId = -1
+     */
     int myId;
-    char myPlayerType;
-    int playerCount;
+    char myPlayerType; // Player type 'A' or 'B'. Dealer will have '\0'
+    int playerCount; // The number of player in the game
 } TokaidoGame;
 
 TokaidoGame *initialize_tokaido_game();
@@ -43,7 +50,7 @@ bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move);
 bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move);
 bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move);
 bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move);
-int get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
+bool get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
                                                     SiteType type, int *move);
 void player_make_a_move(String *message, TokaidoGame *tokaidoGame);
 void update_status(int playerId, int site, int point, int money, int cardType,
@@ -53,7 +60,7 @@ void render_final_score(TokaidoGame *tokaidoGame, FILE *stream);
 void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame);
 String *read_deck(FILE *stream);
 void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError);
-void start_player_process(int argc, char **argv, TokaidoGame *tokaidoGame);
+void start_player_process(char **argv, TokaidoGame *tokaidoGame);
 void start_dealer_game(TokaidoGame *tokaidoGame);
 Player *get_next_turn_player(TokaidoGame *tokaidoGame);
 void send_path_to_all_player(TokaidoGame *tokaidoGame);

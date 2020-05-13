@@ -8,6 +8,9 @@
 #include "player.h"
 #include <stdlib.h>
 
+/**
+ * An enum type stand for all type of site
+ */
 typedef enum {
     Mo = 0,
     V1 = 1,
@@ -17,20 +20,27 @@ typedef enum {
     Barrier = 5
 } SiteType;
 
+/**
+ * A Site datatype which contains
+ */
 typedef struct {
-    SiteType type;
-    char *label;
-    int capacity;
-    int *visitingPlayersId;
-    int visitingOffset;
-    int index;
-    bool isFull;
+    SiteType type;  // Its site type
+    char *label; // Its site type but in string format
+    int capacity; // Its capacity
+    int *visitingPlayersId; // The array of id of players who are currently
+    // visiting this site
+    int visitingOffset; // The offset in the visitingPlayersId array
+    int index; // The index of this site in map
+    bool isFull; // Check if the site is full or not
 } Site;
 
+/**
+ * The Path for playing. The path will contain a list of sites
+ */
 typedef struct {
-    int siteCount;
-    Site *sites;
-    String *stringFormat;
+    int siteCount; // The quantity of sites in map
+    Site *sites; // The list of sites
+    String *stringFormat; // String format of this Path
 } Path;
 
 Path *initialize_path();

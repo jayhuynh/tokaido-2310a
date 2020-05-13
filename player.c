@@ -4,6 +4,11 @@
 
 #include "player.h"
 
+/**
+ * Allocate memory for a list of player base on the player count
+ * @param playerCount : integer - the amount of player would like to allocate
+ * @return : Player pointer to that list of player
+ */
 Player *initialize_players(int playerCount) {
     Player *newPlayers = malloc(sizeof(Player) * playerCount);
     for (int i = 0; i < playerCount; ++i) {
@@ -24,10 +29,19 @@ Player *initialize_players(int playerCount) {
     return newPlayers;
 }
 
+/**
+ * Deallocate the player list that we allocated before
+ * @param players : Player pointer - the target list of player we want to free
+ */
 void free_players(Player *players) {
     free(players);
 }
 
+/**
+ * Print the detail of a specific player into a specific stream
+ * @param player : Player pointer - the player we would like to render
+ * @param stream : File pointer - the stream we would like to print into
+ */
 void render_player(Player *player, FILE *stream) {
     write_string_to_stream("Player ", stream);
     write_int_to_stream(player->id, stream);
@@ -52,6 +66,11 @@ void render_player(Player *player, FILE *stream) {
     write_string_to_stream("\n", stream);
 }
 
+/**
+ * Loop through the card lis to count the amount of card of a player
+ * @param player : Player pointer - the player we would to count
+ * @return : integer - the amount of card
+ */
 int count_card(Player *player) {
     int result = 0;
     for (int i = 0; i < 5; ++i) {
@@ -60,9 +79,20 @@ int count_card(Player *player) {
     return result;
 }
 
+/**
+ * Convert all card a player have and add to his point
+ *
+ * We loop through the card list until the card list is empty
+ * In each iteration we will take 1 card from each card type if it still have
+ * card inside and form a corresponding cardSet. Then we convert cardSet by
+ * a specific case
+ *
+ * @param player
+ */
 void convert_card_to_point(Player *player) {
     while (1) {
         int cardSet = 0;
+        // Loop through the card list
         for (int i = 0; i < 5; ++i) {
             if (player->cards[i] != 0) {
                 cardSet++;
@@ -92,6 +122,10 @@ void convert_card_to_point(Player *player) {
     }
 }
 
+/**
+ * Convert v1 and v2 point of a player and add to his point
+ * @param player
+ */
 void convert_v1_v2_to_point(Player *player) {
     player->point += player->v1 + player->v2;
     player->v1 = 0;
