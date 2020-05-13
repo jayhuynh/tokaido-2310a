@@ -146,12 +146,13 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
  * @param capacity : integer - the capacity of the site
  * @param site : Site pointer - the site that we will load into
  * @param maxCapacity : the max capacity in this case is the amount of players
- * in the game. If the site is SITE_BARRIER "::" , it will have the max capacity
+ * in the game. If the site is SITE_BARRIER "::" , it will have the max
+ * capacity
  * @param pathError : Error enum type - during the load process if there is
  * an error it will throw this error type
  */
 void load_site(char firstCharacter, char secondCharacter, char capacity,
-               Site *site, int maxCapacity, Error pathError) {
+        Site *site, int maxCapacity, Error pathError) {
     SiteType type = SITE_BARRIER;
     char *label = "";
     if (firstCharacter == 'M' && secondCharacter == 'o') {
@@ -351,7 +352,8 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     // Pick the closest SITE_V1, SITE_V2 or SITE_BARRIER
     for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
         if (!path->sites[i].isFull &&
-            (path->sites[i].type == SITE_V1 || path->sites[i].type == SITE_V2 ||
+            (path->sites[i].type == SITE_V1 ||
+             path->sites[i].type == SITE_V2 ||
              path->sites[i].type == SITE_BARRIER)) {
             *move = i;
             return;
@@ -507,8 +509,7 @@ bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move) {
  * @return : if this case is not possible it will return false
  */
 bool get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
-                                                     SiteType type,
-                                                     int *move) {
+        SiteType type, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
 
@@ -563,7 +564,7 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
 
 void
 update_status(int playerId, int siteIndex, int point, int money, int cardType,
-              TokaidoGame *tokaidoGame) {
+        TokaidoGame *tokaidoGame) {
     Player *player = &tokaidoGame->players[playerId];
     Site *site = &tokaidoGame->path->sites[siteIndex];
     remove_player(player, &tokaidoGame->path->sites[player->currentSite]);
@@ -761,7 +762,7 @@ void request_a_move(Player *player) {
 }
 
 void dealer_processor(String *message, TokaidoGame *tokaidoGame,
-                      Player *nextTurnPlayer, bool *earlyEndGame) {
+        Player *nextTurnPlayer, bool *earlyEndGame) {
     Path *path = tokaidoGame->path;
     if (message->length > 2 && message->buffer[0] == 'D' &&
         message->buffer[1] == 'O') {
@@ -812,7 +813,7 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
 }
 
 bool is_move_valid(int move, TokaidoGame *tokaidoGame,
-                   Player *nextTurnPlayer) {
+        Player *nextTurnPlayer) {
     Path *path = tokaidoGame->path;
     if (move > nextTurnPlayer->currentSite &&
         move < path->siteCount &&
@@ -828,8 +829,7 @@ bool is_move_valid(int move, TokaidoGame *tokaidoGame,
 }
 
 void notice_to_all_players(int playerId, int newSite, int additionalPoints,
-                           int changeInMoney, int cardType,
-                           TokaidoGame *tokaidoGame) {
+        int changeInMoney, int cardType, TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         FILE *playerInputStream = tokaidoGame->players[i].inputStream;
         write_string_to_stream("HAP", playerInputStream);

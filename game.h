@@ -43,7 +43,7 @@ void load_player_path(TokaidoGame *tokaidoGame);
 void validate_path(String *path, TokaidoGame *tokaidoGame, Error type);
 
 void load_site(char firstCharacter, char secondCharacter, char capacity,
-               Site *site, int maxCapacity, Error pathError);
+        Site *site, int maxCapacity, Error pathError);
 
 void start_player_game(TokaidoGame *tokaidoGame);
 
@@ -70,12 +70,12 @@ bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move);
 bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move);
 
 bool get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
-                                                     SiteType type, int *move);
+        SiteType type, int *move);
 
 void player_make_a_move(String *message, TokaidoGame *tokaidoGame);
 
 void update_status(int playerId, int site, int point, int money, int cardType,
-                   TokaidoGame *tokaidoGame);
+        TokaidoGame *tokaidoGame);
 
 void send_back_move(int move);
 
@@ -98,13 +98,12 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame);
 void request_a_move(Player *player);
 
 void dealer_processor(String *message, TokaidoGame *tokaidoGame,
-                      Player *nextTurnPlayer, bool *earlyEndGame);
+        Player *nextTurnPlayer, bool *earlyEndGame);
 
 bool is_move_valid(int move, TokaidoGame *tokaidoGame, Player *nextTurnPlayer);
 
 void notice_to_all_players(int playerId, int newSite, int additionalPoints,
-                           int changeInMoney, int cardType,
-                           TokaidoGame *tokaidoGame);
+        int changeInMoney, int cardType, TokaidoGame *tokaidoGame);
 
 int draw_card_from_deck(TokaidoGame *tokaidoGame, Player *player);
 

@@ -55,7 +55,7 @@ void throw_error(Error type) {
     fprintf(stderr, "%s\n", message);
     if (type > 6) {
         exit((int) type - 7);
-    } else{
+    } else {
         exit(type);
     }
 }
