@@ -127,10 +127,10 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
                   pathError);
     }
 
-    // Check if the path must begin and end with Barrier "::"
-    if (tokaidoGame->path->sites[0].type != Barrier ||
+    // Check if the path must begin and end with SITE_BARRIER "::"
+    if (tokaidoGame->path->sites[0].type != SITE_BARRIER ||
         tokaidoGame->path->sites[tokaidoGame->path->siteCount - 1].type !=
-        Barrier) {
+        SITE_BARRIER) {
         throw_error(pathError);
     }
     free(temporaryPath);
@@ -146,13 +146,13 @@ void validate_path(String *path, TokaidoGame *tokaidoGame, Error pathError) {
  * @param capacity : integer - the capacity of the site
  * @param site : Site pointer - the site that we will load into
  * @param maxCapacity : the max capacity in this case is the amount of players
- * in the game. If the site is Barrier "::" , it will have the max capacity
+ * in the game. If the site is SITE_BARRIER "::" , it will have the max capacity
  * @param pathError : Error enum type - during the load process if there is
  * an error it will throw this error type
  */
 void load_site(char firstCharacter, char secondCharacter, char capacity,
                Site *site, int maxCapacity, Error pathError) {
-    SiteType type = Barrier;
+    SiteType type = SITE_BARRIER;
     char *label = "";
     if (firstCharacter == 'M' && secondCharacter == 'o') {
         type = SITE_MO;
@@ -161,16 +161,16 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
         type = SITE_V1;
         label = "V1";
     } else if (firstCharacter == 'V' && secondCharacter == '2') {
-        type = V2;
+        type = SITE_V2;
         label = "V2";
     } else if (firstCharacter == 'D' && secondCharacter == 'o') {
-        type = Do;
+        type = SITE_DO;
         label = "Do";
     } else if (firstCharacter == 'R' && secondCharacter == 'i') {
-        type = Ri;
+        type = SITE_RI;
         label = "Ri";
     } else if (firstCharacter == ':' && secondCharacter == ':') {
-        type = Barrier;
+        type = SITE_BARRIER;
         label = "::";
     } else {
         throw_error(pathError);
@@ -179,7 +179,7 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
     site->label = label;
 
     // Set the capacity base on type
-    if (type != Barrier) {
+    if (type != SITE_BARRIER) {
         if (!isdigit(capacity) || capacity == '0') {
             throw_error(pathError);
         }
@@ -332,9 +332,10 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
 
-    // If player have money and there is a Do site in front of
+    // If player have money and there is a SITE_DO site in front of
     if (me->money > 0) {
-        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Do,
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame,
+                                                            SITE_DO,
                                                             move)) {
             return;
         }
@@ -347,11 +348,11 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
         return;
     }
 
-    // Pick the closest SITE_V1, V2 or Barrier
+    // Pick the closest SITE_V1, SITE_V2 or SITE_BARRIER
     for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
         if (!path->sites[i].isFull &&
-            (path->sites[i].type == SITE_V1 || path->sites[i].type == V2 ||
-             path->sites[i].type == Barrier)) {
+            (path->sites[i].type == SITE_V1 || path->sites[i].type == SITE_V2 ||
+             path->sites[i].type == SITE_BARRIER)) {
             *move = i;
             return;
         }
@@ -418,7 +419,8 @@ bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
 
     if (me->money % 2 == 1) {
-        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, SITE_MO,
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame,
+                                                            SITE_MO,
                                                             move)) {
             return true;
         }
@@ -427,7 +429,7 @@ bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
 }
 
 /**
- * If we had most card and there is a Ri between us and the next barrier
+ * If we had most card and there is a SITE_RI between us and the next barrier
  * @param tokaidoGame : the current game is running
  * @param move : the variable that we will assign a new move to it
  * @return : if this case is not possible it will return false to continue with
@@ -450,7 +452,8 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
     }
 
     if (haveMostCard || everyoneHasZeroCard) {
-        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Ri,
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame,
+                                                            SITE_RI,
                                                             move)) {
             return true;
         }
@@ -460,14 +463,14 @@ bool get_a_move_most_card(TokaidoGame *tokaidoGame, int *move) {
 }
 
 /**
- * If there is a V2 between us and the next barrier
+ * If there is a SITE_V2 between us and the next barrier
  * @param tokaidoGame : the current game is running
  * @param move : the variable that we will assign a new move to it
  * @return : if this case is not possible it will return false to continue with
  * the next case
  */
 bool get_a_move_v2_between(TokaidoGame *tokaidoGame, int *move) {
-    if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, V2,
+    if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, SITE_V2,
                                                         move)) {
         return true;
     }
@@ -504,12 +507,13 @@ bool get_a_move_forward(TokaidoGame *tokaidoGame, int *move) {
  * @return : if this case is not possible it will return false
  */
 bool get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
-                                                     SiteType type, int *move) {
+                                                     SiteType type,
+                                                     int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
     Path *path = tokaidoGame->path;
 
     for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
-        if (path->sites[i].type == Barrier) {
+        if (path->sites[i].type == SITE_BARRIER) {
             break;
         }
         if (path->sites[i].type == type && !path->sites[i].isFull) {
@@ -568,7 +572,7 @@ update_status(int playerId, int siteIndex, int point, int money, int cardType,
     player->money += money;
     if (site->type == SITE_V1) {
         player->v1++;
-    } else if (site->type == V2) {
+    } else if (site->type == SITE_V2) {
         player->v2++;
     }
     if (cardType != 0) {
@@ -781,19 +785,20 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
                 case SITE_V1:
                     nextTurnPlayer->v1++;
                     break;
-                case V2:
+                case SITE_V2:
                     nextTurnPlayer->v2++;
                     break;
-                case Do:
+                case SITE_DO:
                     additionalPoints = nextTurnPlayer->money / 2;
                     nextTurnPlayer->point += additionalPoints;
                     changeInMoney -= nextTurnPlayer->money;
                     nextTurnPlayer->money = 0;
                     break;
-                case Ri:
-                    cardType = draw_card_from_deck(tokaidoGame, nextTurnPlayer);
+                case SITE_RI:
+                    cardType = draw_card_from_deck(tokaidoGame,
+                                                   nextTurnPlayer);
                     break;
-                case Barrier:
+                case SITE_BARRIER:
                     break;
             }
             notice_to_all_players(nextTurnPlayer->id, move, additionalPoints,
@@ -806,13 +811,14 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
     }
 }
 
-bool is_move_valid(int move, TokaidoGame *tokaidoGame, Player *nextTurnPlayer) {
+bool is_move_valid(int move, TokaidoGame *tokaidoGame,
+                   Player *nextTurnPlayer) {
     Path *path = tokaidoGame->path;
     if (move > nextTurnPlayer->currentSite &&
         move < path->siteCount &&
         !path->sites[move].isFull) {
         for (int i = nextTurnPlayer->currentSite + 1; i < move; ++i) {
-            if (path->sites[i].type == Barrier) {
+            if (path->sites[i].type == SITE_BARRIER) {
                 return false;
             }
         }

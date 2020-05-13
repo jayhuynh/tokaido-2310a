@@ -142,10 +142,10 @@ int catch_signal(int signal, void (*handler)(int)) {
 }
 
 /**
- * Handler function for SIGHUP signal. It will kill all the child processes base
- * on the group id. After kill all child processes, it will exit with status
- * code 6. I use 6 because the spec said won't care about the exit status in
- * this case
+ * Handler function for SIGHUP signal. It will kill all the child processes
+ * base on the group id. After kill all child processes, it will exit with
+ * status code 6. I use 6 because the spec said won't care about the exit
+ * status in this case
  *
  * @param signal : integer - the signal we got, but we won't use it in this
  * situation

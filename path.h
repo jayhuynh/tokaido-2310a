@@ -14,10 +14,10 @@
 typedef enum {
     SITE_MO = 0,
     SITE_V1 = 1,
-    V2 = 2,
-    Do = 3,
-    Ri = 4,
-    Barrier = 5
+    SITE_V2 = 2,
+    SITE_DO = 3,
+    SITE_RI = 4,
+    SITE_BARRIER = 5
 } SiteType;
 
 /**
