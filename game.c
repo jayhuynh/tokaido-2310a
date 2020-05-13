@@ -316,7 +316,7 @@ bool player_processor(String *message, TokaidoGame *tokaidoGame) {
     } else if (strcmp(message->buffer, "DONE") == 0) {
         return false;
     } else if (message->length >= 12 && message->buffer[0] == 'H' &&
-        message->buffer[1] == 'A' && message->buffer[2] == 'P') {
+            message->buffer[1] == 'A' && message->buffer[2] == 'P') {
         player_make_a_move(message, tokaidoGame);
     } else {
         throw_error(PLAYER_COMMUNICATIONS);
@@ -528,6 +528,7 @@ bool get_a_specific_site_between_us_and_next_barrier(TokaidoGame *tokaidoGame,
  * @param tokaidoGame : the current game is running
  */
 void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
+    // Split detail of HAP message
     char *playerIdStringFormat = strtok(message->buffer + 3, ",");
     char *siteStringFormat = strtok(NULL, ",");
     char *pointStringFormat = strtok(NULL, ",");
@@ -556,9 +557,22 @@ void player_make_a_move(String *message, TokaidoGame *tokaidoGame) {
     if (card < 0 || card > 5) {
         throw_error(PLAYER_COMMUNICATIONS);
     }
+    // Update the status of a player in toakaido game
     update_status(playerId, site, point, money, card, tokaidoGame);
 }
 
+/**
+ * Remover the player from his current site
+ * Then add him to a new site and also update his attributes base on the
+ * message or the site type in case (V1, V2)
+ *
+ * @param playerId : id of the target player we would like to update
+ * @param siteIndex : the new site index the player will move to
+ * @param point : his new point
+ * @param money : his new money
+ * @param cardType : the type of card he got
+ * @param tokaidoGame : the current game is running
+ */
 void update_status(int playerId, int siteIndex, int point, int money,
         int cardType, TokaidoGame *tokaidoGame) {
     Player *player = &tokaidoGame->players[playerId];
@@ -572,22 +586,35 @@ void update_status(int playerId, int siteIndex, int point, int money,
     } else if (site->type == SITE_V2) {
         player->v2++;
     }
+    // We have to minus one because. For example in the message A = 1
+    // However in our array -> Index[0] = A
     if (cardType != 0) {
         player->cards[cardType - 1]++;
     }
+    // Render the player detail
     render_player(player, stderr);
     render(tokaidoGame, stderr);
 }
 
+/**
+ * Send back move to dealer or we can said send back to stdout
+ * @param move : the value move we will send
+ */
 void send_back_move(int move) {
     write_string_to_stream("DO", stdout);
     write_int_to_stream(move, stdout);
     write_char_to_stream('\n', stdout);
 }
 
+/**
+ * Render the final to a specific stream
+ * @param tokaidoGame : we will get the result from this game
+ * @param stream : the target stream we would like to print into
+ */
 void render_final_score(TokaidoGame *tokaidoGame, FILE *stream) {
     write_string_to_stream("Scores: ", stream);
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
+        // We have to convert card and v1,v2 to point first
         convert_card_to_point(&tokaidoGame->players[i]);
         convert_v1_v2_to_point(&tokaidoGame->players[i]);
         write_int_to_stream(tokaidoGame->players[i].point, stream);
@@ -598,6 +625,12 @@ void render_final_score(TokaidoGame *tokaidoGame, FILE *stream) {
     write_char_to_stream('\n', stream);
 }
 
+/**
+ * Load and validate the arguments for tokaido game in dealer process
+ * @param argc : argument count
+ * @param argv : arugment vector
+ * @param tokaidoGame : the game we will load into
+ */
 void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     if (argc < 4) {
         throw_error(DEALER_ARGUMENTS);
@@ -623,12 +656,26 @@ void load_dealer_arguments(int argc, char **argv, TokaidoGame *tokaidoGame) {
     }
 }
 
+/**
+ * Read deck form a specific stream
+ * @param stream : the stream we would like to read deck from
+ * @return : the String contain deck inside
+ */
 String *read_deck(FILE *stream) {
     String *deck = initialize_string();
     read_from_stream(deck, stream, DEALER_DECK);
     return deck;
 }
 
+/**
+ * Valiadate and load deck into game deck
+ *
+ * @param deck : the String contain deck that we woul like to load and
+ * validate
+ * @param tokaidoGame : the game we would like to load deck into
+ * @param deckError : the type of error we will throw in case of error in
+ * validating or loading process
+ */
 void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError) {
     int cardCount = 0;
     char *cardsInDeck = "";
@@ -653,6 +700,14 @@ void validate_deck(String *deck, TokaidoGame *tokaidoGame, Error deckError) {
     free_string(deck);
 }
 
+/**
+ * Start the child player process.
+ * Create pipe between dealer and players
+ *
+ * @param argv : argument value
+ * @param tokaidoGame : the game to update player's inputStream and
+ * outputStream
+ */
 void start_player_process(char **argv, TokaidoGame *tokaidoGame) {
     tokaidoGame->players = initialize_players(tokaidoGame->playerCount);
 
@@ -660,6 +715,8 @@ void start_player_process(char **argv, TokaidoGame *tokaidoGame) {
         Player *player = &tokaidoGame->players[i];
         char playerCount[11];
         char playerId[11];
+        // Parse the playerCount and id into string because execl() just accept
+        // string for parameter
         sprintf(playerCount, "%d", tokaidoGame->playerCount);
         sprintf(playerId, "%d", i);
         if (pipe(player->readPipe) == -1) {
@@ -674,10 +731,12 @@ void start_player_process(char **argv, TokaidoGame *tokaidoGame) {
             close(player->readPipe[WRITE]);
             dup2(player->writePipe[WRITE], 1);
             close(player->writePipe[READ]);
+            // devNull is used to redirect all players error messages into
             FILE *devNull = fopen("/dev/null", "w");
             if (devNull == NULL || ferror(devNull)) {
                 throw_error(DEALER_STARTING_PROCESS);
             } else {
+                // Redirect players process error to devNull
                 dup2(fileno(devNull), 2);
             }
             if (execl(argv[3 + i], argv[3 + i], playerCount, playerId,
@@ -690,12 +749,18 @@ void start_player_process(char **argv, TokaidoGame *tokaidoGame) {
             }
             close(player->readPipe[READ]);
             close(player->writePipe[WRITE]);
+            // Open inputStream and outputStream for each player.
+            // Dealer and player will communicate through these streams
             player->inputStream = fdopen(player->readPipe[WRITE], "w");
             player->outputStream = fdopen(player->writePipe[READ], "r");
         }
     }
 }
 
+/**
+ * Dealer main iteration
+ * @param tokaidoGame : the game is running by dealer
+ */
 void start_dealer_game(TokaidoGame *tokaidoGame) {
     bool endGame = false;
     bool earlyEndGame = false;
@@ -704,16 +769,21 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
     render(tokaidoGame, stdout);
     while (!endGame) {
         Player *nextTurnPlayer = get_next_turn_player(tokaidoGame);
+        // Request the mover from next turn player
         request_a_move(nextTurnPlayer);
         String *message = read_message(nextTurnPlayer->outputStream,
                 DEALER_COMMUNICATIONS);
+        // Process the message from the player
         dealer_processor(message, tokaidoGame, nextTurnPlayer, &earlyEndGame);
         if (earlyEndGame) {
+            // If earlyEndgame happened -> notice to all players and throw
+            // error
             notice_early_game_over_to_all_players(tokaidoGame);
             throw_error(DEALER_COMMUNICATIONS);
         }
         render_player(nextTurnPlayer, stdout);
         render(tokaidoGame, stdout);
+        // If the last barrier site is fill the game will end
         endGame = tokaidoGame->path
                 ->sites[tokaidoGame->path->siteCount - 1].isFull;
         free_string(message);
@@ -722,11 +792,19 @@ void start_dealer_game(TokaidoGame *tokaidoGame) {
     render_final_score(tokaidoGame, stdout);
 }
 
+/**
+ * Loop through the player list and get then next turn player
+ *
+ * @param tokaidoGame
+ * @return
+ */
 Player *get_next_turn_player(TokaidoGame *tokaidoGame) {
     Site *sites = tokaidoGame->path->sites;
     int playerId = -1;
     for (int i = 0; i < tokaidoGame->path->siteCount; ++i) {
         if (sites[i].visitingOffset != -1) {
+            // Get the last player in the visitingPlayersId array
+            // Which means the furthest player from the path
             playerId = sites[i].visitingPlayersId[sites[i].visitingOffset];
             break;
         }
@@ -738,12 +816,17 @@ Player *get_next_turn_player(TokaidoGame *tokaidoGame) {
     return &tokaidoGame->players[playerId];
 }
 
+/**
+ * Loop through all player read "^" from them and send path to them
+ * @param tokaidoGame
+ */
 void send_path_to_all_player(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         Player *player = &tokaidoGame->players[i];
         String *message = read_message(player->outputStream,
                 DEALER_STARTING_PROCESS);
         if (strcmp(message->buffer, "^") == 0) {
+            // Send path as string format
             write_string_to_stream(tokaidoGame->path->stringFormat->buffer,
                     player->inputStream);
             write_char_to_stream('\n', player->inputStream);
@@ -753,10 +836,22 @@ void send_path_to_all_player(TokaidoGame *tokaidoGame) {
     }
 }
 
+/**
+ * Send the message to request a move from a player
+ * @param player
+ */
 void request_a_move(Player *player) {
     write_string_to_stream("YT\n", player->inputStream);
 }
 
+/**
+ * Validate the movement message, update status to all other players
+ * @param message : the movement message
+ * @param tokaidoGame : the game we are running
+ * @param nextTurnPlayer : next turn player
+ * @param earlyEndGame : if the message is invalid the earlyEndGame will be
+ * changed to true
+ */
 void dealer_processor(String *message, TokaidoGame *tokaidoGame,
         Player *nextTurnPlayer, bool *earlyEndGame) {
     Path *path = tokaidoGame->path;
@@ -808,13 +903,22 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
     }
 }
 
+/**
+ * Check if the move is valid or not
+ * @param move : the move we would like to check
+ * @param tokaidoGame : check with this tokaidoGame
+ * @param nextTurnPlayer : next turn player
+ * @return
+ */
 bool is_move_valid(int move, TokaidoGame *tokaidoGame,
         Player *nextTurnPlayer) {
     Path *path = tokaidoGame->path;
+    // The move have to be inside the path and not in a full site
     if (move > nextTurnPlayer->currentSite &&
             move < path->siteCount &&
             !path->sites[move].isFull) {
         for (int i = nextTurnPlayer->currentSite + 1; i < move; ++i) {
+            // If the move pass through the barrier -> it should be false
             if (path->sites[i].type == SITE_BARRIER) {
                 return false;
             }
@@ -824,6 +928,15 @@ bool is_move_valid(int move, TokaidoGame *tokaidoGame,
     return false;
 }
 
+/**
+ * Send notification to all players about there is a move jus happend
+ * @param playerId : id of the player make a move
+ * @param newSite : the new site index of that player
+ * @param additionalPoints : the additional point that player gain
+ * @param changeInMoney : the change in his money
+ * @param cardType : the card he got
+ * @param tokaidoGame : the game we are running
+ */
 void notice_to_all_players(int playerId, int newSite, int additionalPoints,
         int changeInMoney, int cardType, TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
@@ -842,16 +955,28 @@ void notice_to_all_players(int playerId, int newSite, int additionalPoints,
     }
 }
 
+/**
+ * Draw a card from deck
+ * @param tokaidoGame : the deck belong to this game
+ * @param player : this player got this card, assign this card to his own
+ * card array
+ * @return : the card type
+ */
 int draw_card_from_deck(TokaidoGame *tokaidoGame, Player *player) {
     char card = tokaidoGame->deck[tokaidoGame->deckOffset++];
     int cardType = card - 'A' + 1;
     player->cards[cardType - 1]++;
+    // Reset the offset if we reach the end of the deck
     if (tokaidoGame->deckOffset == strlen(tokaidoGame->deck)) {
         tokaidoGame->deckOffset = 0;
     }
     return cardType;
 }
 
+/**
+ * Send end game message to all player in our game
+ * @param tokaidoGame : the game we are running
+ */
 void notice_end_game_to_all_players(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         FILE *playerInputStream = tokaidoGame->players[i].inputStream;
@@ -859,6 +984,10 @@ void notice_end_game_to_all_players(TokaidoGame *tokaidoGame) {
     }
 }
 
+/**
+ * Send the early game message to all player in our game
+ * @param tokaidoGame : the game we are running
+ */
 void notice_early_game_over_to_all_players(TokaidoGame *tokaidoGame) {
     for (int i = 0; i < tokaidoGame->playerCount; ++i) {
         FILE *playerInputStream = tokaidoGame->players[i].inputStream;
