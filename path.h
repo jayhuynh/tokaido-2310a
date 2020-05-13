@@ -12,8 +12,8 @@
  * An enum type stand for all type of site
  */
 typedef enum {
-    Mo = 0,
-    V1 = 1,
+    SITE_MO = 0,
+    SITE_V1 = 1,
     V2 = 2,
     Do = 3,
     Ri = 4,

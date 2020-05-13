@@ -155,10 +155,10 @@ void load_site(char firstCharacter, char secondCharacter, char capacity,
     SiteType type = Barrier;
     char *label = "";
     if (firstCharacter == 'M' && secondCharacter == 'o') {
-        type = Mo;
+        type = SITE_MO;
         label = "Mo";
     } else if (firstCharacter == 'V' && secondCharacter == '1') {
-        type = V1;
+        type = SITE_V1;
         label = "V1";
     } else if (firstCharacter == 'V' && secondCharacter == '2') {
         type = V2;
@@ -340,17 +340,17 @@ void get_a_move_of_player_type_a(TokaidoGame *tokaidoGame, int *move) {
         }
     }
 
-    // If next site is Mo and it is not full
+    // If next site is SITE_MO and it is not full
     if (!path->sites[me->currentSite + 1].isFull &&
-        path->sites[me->currentSite + 1].type == Mo) {
+        path->sites[me->currentSite + 1].type == SITE_MO) {
         *move = me->currentSite + 1;
         return;
     }
 
-    // Pick the closest V1, V2 or Barrier
+    // Pick the closest SITE_V1, V2 or Barrier
     for (int i = me->currentSite + 1; i < path->siteCount; ++i) {
         if (!path->sites[i].isFull &&
-            (path->sites[i].type == V1 || path->sites[i].type == V2 ||
+            (path->sites[i].type == SITE_V1 || path->sites[i].type == V2 ||
              path->sites[i].type == Barrier)) {
             *move = i;
             return;
@@ -408,7 +408,7 @@ bool get_a_move_other_player_later(TokaidoGame *tokaidoGame, int *move) {
 }
 
 /**
- * If we had odd money and there is a Mo between us and the next barrier
+ * If we had odd money and there is a SITE_MO between us and the next barrier
  * @param tokaidoGame : the current game is running
  * @param move : the variable that we will assign a new move to it
  * @return : if this case is not possible it will return false to continue with
@@ -418,7 +418,7 @@ bool get_a_move_odd_money(TokaidoGame *tokaidoGame, int *move) {
     Player *me = &tokaidoGame->players[tokaidoGame->myId];
 
     if (me->money % 2 == 1) {
-        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, Mo,
+        if (get_a_specific_site_between_us_and_next_barrier(tokaidoGame, SITE_MO,
                                                             move)) {
             return true;
         }
@@ -566,7 +566,7 @@ update_status(int playerId, int siteIndex, int point, int money, int cardType,
     add_player(player, site);
     player->point += point;
     player->money += money;
-    if (site->type == V1) {
+    if (site->type == SITE_V1) {
         player->v1++;
     } else if (site->type == V2) {
         player->v2++;
@@ -774,11 +774,11 @@ void dealer_processor(String *message, TokaidoGame *tokaidoGame,
             int changeInMoney = 0;
             int cardType = 0;
             switch (path->sites[move].type) {
-                case Mo:
+                case SITE_MO:
                     nextTurnPlayer->money += 3;
                     changeInMoney += 3;
                     break;
-                case V1:
+                case SITE_V1:
                     nextTurnPlayer->v1++;
                     break;
                 case V2:
